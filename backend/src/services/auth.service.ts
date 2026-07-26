@@ -1,0 +1,62 @@
+import jwt from 'jsonwebtoken';
+import { User } from '../models';
+import config from '../config';
+import { JwtPayload, TokenPair } from '../types/auth';
+import { Role } from '../types/enums';
+
+const generateTokenPair = (payload: JwtPayload): TokenPair => {
+  const accessToken = jwt.sign(payload, config.jwtSecret, {
+    expiresIn: config.jwtExpiresIn,
+  });
+  const refreshToken = jwt.sign(payload, config.jwtRefreshSecret, {
+    expiresIn: config.jwtRefreshExpiresIn,
+  });
+  return { accessToken, refreshToken };
+};
+
+const verifyRefreshToken = (token: string): JwtPayload => {
+  return jwt.verify(token, config.jwtRefreshSecret) as JwtPayload;
+};
+
+export const register = async (name: string, email: string, password: string, role: Role) => {
+  const existing = await User.findOne({ email });
+  if (existing) {
+    throw new Error('Email already in use');
+  }
+
+  const user = await User.create({ name, email, password, role });
+  const payload: JwtPayload = { userId: user._id, role: user.role };
+  const tokens = generateTokenPair(payload);
+
+  return { user, tokens };
+};
+
+export const login = async (email: string, password: string) => {
+  const user = await User.findOne({ email });
+  if (!user || !user.isActive) {
+    throw new Error('Invalid email or password');
+  }
+
+  const isMatch = await user.comparePassword(password);
+  if (!isMatch) {
+    throw new Error('Invalid email or password');
+  }
+
+  const payload: JwtPayload = { userId: user._id, role: user.role };
+  const tokens = generateTokenPair(payload);
+
+  return { user, tokens };
+};
+
+export const refresh = async (refreshToken: string) => {
+  const decoded = verifyRefreshToken(refreshToken);
+  const user = await User.findById(decoded.userId);
+  if (!user || !user.isActive) {
+    throw new Error('Invalid refresh token');
+  }
+
+  const payload: JwtPayload = { userId: user._id, role: user.role };
+  const tokens = generateTokenPair(payload);
+
+  return { user, tokens };
+};
