@@ -1,6 +1,7 @@
 import express from 'express';
 import morgan from 'morgan';
 import { authRoutes } from './routes';
+import { errorHandler, notFound } from './middleware';
 
 const app = express();
 
@@ -12,5 +13,8 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+
+app.use(notFound);
+app.use(errorHandler);
 
 export default app;
