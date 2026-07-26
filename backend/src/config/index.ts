@@ -6,6 +6,6 @@ const config = {
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || 'fallback_dev_refresh_secret',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '15m',
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
-} as const;
+};
 
 export default config;

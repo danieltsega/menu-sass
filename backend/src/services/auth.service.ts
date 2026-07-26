@@ -1,16 +1,15 @@
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { User } from '../models';
 import config from '../config';
 import { JwtPayload, TokenPair } from '../types/auth';
 import { Role } from '../types/enums';
 
 const generateTokenPair = (payload: JwtPayload): TokenPair => {
-  const accessToken = jwt.sign(payload, config.jwtSecret, {
-    expiresIn: config.jwtExpiresIn,
-  });
-  const refreshToken = jwt.sign(payload, config.jwtRefreshSecret, {
-    expiresIn: config.jwtRefreshExpiresIn,
-  });
+  const accessOptions: SignOptions = { expiresIn: config.jwtExpiresIn as SignOptions['expiresIn'] };
+  const refreshOptions: SignOptions = { expiresIn: config.jwtRefreshExpiresIn as SignOptions['expiresIn'] };
+
+  const accessToken = jwt.sign(payload, config.jwtSecret, accessOptions);
+  const refreshToken = jwt.sign(payload, config.jwtRefreshSecret, refreshOptions);
   return { accessToken, refreshToken };
 };
 
