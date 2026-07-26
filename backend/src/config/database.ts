@@ -7,8 +7,8 @@ const connectDB = async (): Promise<void> => {
       serverSelectionTimeoutMS: 5000,
     });
     console.log(`MongoDB connected: ${conn.connection.host}`);
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
+  } catch {
+    console.log('MongoDB not available — running without database');
     console.log('Server will continue without database connection');
   }
 };
