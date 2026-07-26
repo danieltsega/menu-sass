@@ -1,6 +1,6 @@
 import express from 'express';
 import morgan from 'morgan';
-import { authRoutes, cafeRoutes, categoryRoutes } from './routes';
+import { authRoutes, cafeRoutes, categoryRoutes, dishRoutes } from './routes';
 import { errorHandler, notFound } from './middleware';
 
 const app = express();
@@ -15,6 +15,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/cafes', cafeRoutes);
 app.use('/api/cafes/:cafeId/categories', categoryRoutes);
+app.use('/api/cafes/:cafeId/dishes', dishRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
