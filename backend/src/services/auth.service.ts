@@ -1,8 +1,12 @@
 import jwt, { SignOptions } from 'jsonwebtoken';
-import { User } from '../models';
+import crypto from 'crypto';
+import { User, BlacklistedToken } from '../models';
 import config from '../config';
 import { JwtPayload, TokenPair } from '../types/auth';
 import { Role } from '../types/enums';
+
+const hashToken = (token: string): string =>
+  crypto.createHash('sha256').update(token).digest('hex');
 
 const generateTokenPair = (payload: JwtPayload): TokenPair => {
   const accessOptions: SignOptions = { expiresIn: config.jwtExpiresIn as SignOptions['expiresIn'] };
@@ -13,8 +17,8 @@ const generateTokenPair = (payload: JwtPayload): TokenPair => {
   return { accessToken, refreshToken };
 };
 
-const verifyRefreshToken = (token: string): JwtPayload => {
-  return jwt.verify(token, config.jwtRefreshSecret) as JwtPayload;
+const verifyRefreshToken = (token: string): JwtPayload & { exp: number } => {
+  return jwt.verify(token, config.jwtRefreshSecret) as JwtPayload & { exp: number };
 };
 
 export const register = async (name: string, email: string, password: string, role: Role) => {
@@ -49,6 +53,13 @@ export const login = async (email: string, password: string) => {
 
 export const refresh = async (refreshToken: string) => {
   const decoded = verifyRefreshToken(refreshToken);
+  const hashed = hashToken(refreshToken);
+
+  const blacklisted = await BlacklistedToken.findOne({ token: hashed });
+  if (blacklisted) {
+    throw new Error('Token has been revoked');
+  }
+
   const user = await User.findById(decoded.userId);
   if (!user || !user.isActive) {
     throw new Error('Invalid refresh token');
@@ -58,4 +69,12 @@ export const refresh = async (refreshToken: string) => {
   const tokens = generateTokenPair(payload);
 
   return { user, tokens };
+};
+
+export const logout = async (refreshToken: string): Promise<void> => {
+  const decoded = verifyRefreshToken(refreshToken);
+  const hashed = hashToken(refreshToken);
+  const expiresAt = new Date(decoded.exp * 1000);
+
+  await BlacklistedToken.create({ token: hashed, expiresAt });
 };

@@ -24,12 +24,18 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 export const refresh = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { refreshToken } = req.body;
-    if (!refreshToken) {
-      res.status(400).json({ success: false, error: 'Refresh token is required' });
-      return;
-    }
     const { user, tokens } = await authService.refresh(refreshToken);
     res.status(200).json({ success: true, data: { user, tokens } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const logout = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { refreshToken } = req.body;
+    await authService.logout(refreshToken);
+    res.status(200).json({ success: true, data: null });
   } catch (error) {
     next(error);
   }

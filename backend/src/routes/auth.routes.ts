@@ -17,4 +17,8 @@ router.route('/refresh')
   .post(validate(refreshSchema), authController.refresh)
   .all((_req, res) => res.status(405).json({ success: false, error: 'Method not allowed. Use POST' }));
 
+router.route('/logout')
+  .post(validate(refreshSchema), authController.logout)
+  .all((_req, res) => res.status(405).json({ success: false, error: 'Method not allowed. Use POST' }));
+
 export default router;
