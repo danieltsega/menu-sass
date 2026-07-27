@@ -13,10 +13,12 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
   }
 };
 
-export const getAll = async (_req: Request, res: Response, next: NextFunction) => {
+export const getAll = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const cafes = await cafeService.getAllCafes();
-    res.status(200).json({ success: true, data: cafes });
+    const page = parseInt(req.query.page as string) || undefined;
+    const limit = parseInt(req.query.limit as string) || undefined;
+    const { cafes, pagination } = await cafeService.getAllCafes(page, limit);
+    res.status(200).json({ success: true, data: cafes, pagination });
   } catch (error) {
     next(error);
   }

@@ -2,7 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockCafe = vi.hoisted(() => Object.assign(vi.fn(), {
   findOne: vi.fn(),
-  find: vi.fn(() => ({ sort: vi.fn().mockResolvedValue([]) })),
+  find: vi.fn(() => ({
+    sort: vi.fn(() => ({
+      skip: vi.fn(() => ({
+        limit: vi.fn().mockResolvedValue([]),
+      })),
+    })),
+  })),
+  countDocuments: vi.fn().mockResolvedValue(0),
   findById: vi.fn(),
   findByIdAndUpdate: vi.fn(),
   findByIdAndDelete: vi.fn(),
@@ -40,11 +47,18 @@ describe('Cafe Service', () => {
   });
 
   describe('getAllCafes', () => {
-    it('should return all cafes', async () => {
+    it('should return paginated cafes', async () => {
       const cafes = [{ _id: '1', name: 'A' }, { _id: '2', name: 'B' }];
-      mockCafe.find.mockReturnValue({ sort: vi.fn().mockResolvedValue(cafes) });
-      const result = await cafeService.getAllCafes();
-      expect(result).toHaveLength(2);
+      const sortChain = { skip: vi.fn(() => ({ limit: vi.fn().mockResolvedValue(cafes) })) };
+      mockCafe.find.mockReturnValue({ sort: vi.fn(() => sortChain) });
+      mockCafe.countDocuments.mockResolvedValue(10);
+
+      const result = await cafeService.getAllCafes(1, 2);
+      expect(result.cafes).toHaveLength(2);
+      expect(result.pagination.total).toBe(10);
+      expect(result.pagination.page).toBe(1);
+      expect(result.pagination.limit).toBe(2);
+      expect(result.pagination.totalPages).toBe(5);
     });
   });
 });

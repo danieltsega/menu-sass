@@ -1,4 +1,5 @@
 import Cafe from '../models/Cafe';
+import { getPaginationParams, getPaginationMeta, PaginationMeta } from '../utils/pagination';
 
 export const createCafe = async (
   name: string,
@@ -15,9 +16,13 @@ export const createCafe = async (
   return cafe;
 };
 
-export const getAllCafes = async () => {
-  const cafes = await Cafe.find().sort({ createdAt: -1 });
-  return cafes;
+export const getAllCafes = async (page?: number, limit?: number) => {
+  const pagination = getPaginationParams(page, limit);
+  const [cafes, total] = await Promise.all([
+    Cafe.find().sort({ createdAt: -1 }).skip(pagination.skip).limit(pagination.limit),
+    Cafe.countDocuments(),
+  ]);
+  return { cafes, pagination: getPaginationMeta(total, pagination) };
 };
 
 export const getCafeById = async (id: string) => {

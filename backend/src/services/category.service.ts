@@ -1,6 +1,7 @@
 import Category from '../models/Category';
 import Cafe from '../models/Cafe';
 import { Role } from '../types/enums';
+import { getPaginationParams, getPaginationMeta } from '../utils/pagination';
 
 const verifyCafeAccess = async (cafeId: string, userId: string, role: Role) => {
   if (role === Role.SUPER_ADMIN) return;
@@ -22,10 +23,14 @@ export const createCategory = async (
   return category;
 };
 
-export const getCategoriesByCafe = async (cafeId: string, userId: string, role: Role) => {
+export const getCategoriesByCafe = async (cafeId: string, userId: string, role: Role, page?: number, limit?: number) => {
   await verifyCafeAccess(cafeId, userId, role);
-  const categories = await Category.find({ cafe: cafeId }).sort({ displayOrder: 1 });
-  return categories;
+  const pagination = getPaginationParams(page, limit);
+  const [categories, total] = await Promise.all([
+    Category.find({ cafe: cafeId }).sort({ displayOrder: 1 }).skip(pagination.skip).limit(pagination.limit),
+    Category.countDocuments({ cafe: cafeId }),
+  ]);
+  return { categories, pagination: getPaginationMeta(total, pagination) };
 };
 
 export const getCategoryById = async (cafeId: string, categoryId: string, userId: string, role: Role) => {

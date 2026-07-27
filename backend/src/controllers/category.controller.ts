@@ -19,10 +19,12 @@ export const create = async (req: Request<CafeParams>, res: Response, next: Next
 
 export const getAll = async (req: Request<CafeParams>, res: Response, next: NextFunction) => {
   try {
-    const categories = await categoryService.getCategoriesByCafe(
-      req.params.cafeId, req.user!.userId, req.user!.role
+    const page = parseInt(req.query.page as string) || undefined;
+    const limit = parseInt(req.query.limit as string) || undefined;
+    const { categories, pagination } = await categoryService.getCategoriesByCafe(
+      req.params.cafeId, req.user!.userId, req.user!.role, page, limit
     );
-    res.status(200).json({ success: true, data: categories });
+    res.status(200).json({ success: true, data: categories, pagination });
   } catch (error) {
     next(error);
   }

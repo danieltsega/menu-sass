@@ -2,6 +2,7 @@ import Dish from '../models/Dish';
 import Cafe from '../models/Cafe';
 import Category from '../models/Category';
 import { Role } from '../types/enums';
+import { getPaginationParams, getPaginationMeta } from '../utils/pagination';
 
 const verifyCafeAccess = async (cafeId: string, userId: string, role: Role) => {
   if (role === Role.SUPER_ADMIN) return;
@@ -31,10 +32,14 @@ export const createDish = async (
   return dish;
 };
 
-export const getDishesByCafe = async (cafeId: string, userId: string, role: Role) => {
+export const getDishesByCafe = async (cafeId: string, userId: string, role: Role, page?: number, limit?: number) => {
   await verifyCafeAccess(cafeId, userId, role);
-  const dishes = await Dish.find({ cafe: cafeId }).sort({ createdAt: -1 });
-  return dishes;
+  const pagination = getPaginationParams(page, limit);
+  const [dishes, total] = await Promise.all([
+    Dish.find({ cafe: cafeId }).sort({ createdAt: -1 }).skip(pagination.skip).limit(pagination.limit),
+    Dish.countDocuments({ cafe: cafeId }),
+  ]);
+  return { dishes, pagination: getPaginationMeta(total, pagination) };
 };
 
 export const getDishById = async (cafeId: string, dishId: string, userId: string, role: Role) => {
