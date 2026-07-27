@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/app.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "seed": "tsx src/seed.ts"
   },
   "keywords": [],
   "author": "",
