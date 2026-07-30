@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
         hostname: "localhost",
         pathname: "/uploads/**",
       },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
     ],
   },
 };
