@@ -10,7 +10,7 @@ interface DishGridProps {
 
 export function DishGrid({ dishes, categoryName }: DishGridProps) {
   return (
-    <div className="grid grid-cols-2 gap-3 px-4 pb-6">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 px-4 pb-6">
       {dishes.map((dish) => (
         <DishCard key={dish.id} dish={dish} categoryName={categoryName} />
       ))}
