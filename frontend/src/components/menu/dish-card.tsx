@@ -1,6 +1,5 @@
 "use client"
 
-import { cn } from "@/lib/utils"
 import { PlaceholderImage } from "@/components/menu/placeholder-image"
 import { getCategoryIcon } from "@/components/menu/category-icons"
 import type { Dish } from "@/types"
@@ -12,12 +11,7 @@ interface DishCardProps {
 
 export function DishCard({ dish, categoryName }: DishCardProps) {
   return (
-    <div
-      className={cn(
-        "rounded-xl bg-card text-card-foreground shadow-md overflow-hidden transition-opacity",
-        !dish.isAvailable && "opacity-50"
-      )}
-    >
+    <div className="rounded-xl bg-card text-card-foreground shadow-md overflow-hidden">
       <div className="relative aspect-square">
         {dish.image ? (
           <div
@@ -29,11 +23,6 @@ export function DishCard({ dish, categoryName }: DishCardProps) {
             className="w-full h-full"
             icon={categoryName ? getCategoryIcon(categoryName) : undefined}
           />
-        )}
-        {!dish.isAvailable && (
-          <span className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-[10px] font-medium px-2 py-0.5 rounded-full">
-            Unavailable
-          </span>
         )}
       </div>
       <div className="p-3 space-y-1">
