@@ -1,8 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { MenuData } from "@/types"
-import { CafeHeader, CategoryFilter, DishCard } from "@/components/menu"
+import type { MenuData } from "@/types"
+import { CafeHeader } from "@/components/menu/cafe-header"
+import { CategoryFilter } from "@/components/menu/category-filter"
+import { DishGrid } from "@/components/menu/dish-grid"
 
 export function MenuContent({ menu }: { menu: MenuData }) {
   const [activeCategory, setActiveCategory] = useState(menu.categories[0].id)
@@ -19,20 +21,14 @@ export function MenuContent({ menu }: { menu: MenuData }) {
         onSelect={setActiveCategory}
       />
 
-      <div className="divide-y-0">
-        {currentCategory && (
-          <div>
-            {currentCategory.dishes.length > 0 && (
-              <div className="text-xs font-medium text-muted-foreground px-4 pt-3 pb-1">
-                {currentCategory.name}
-              </div>
-            )}
-            {currentCategory.dishes.map((dish) => (
-              <DishCard key={dish.id} {...dish} />
-            ))}
-          </div>
-        )}
-      </div>
+      {currentCategory && currentCategory.dishes.length > 0 && (
+        <div className="pt-4">
+          <DishGrid
+            dishes={currentCategory.dishes}
+            categoryName={currentCategory.name}
+          />
+        </div>
+      )}
     </div>
   )
 }
