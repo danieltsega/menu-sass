@@ -1,45 +1,92 @@
 "use client"
 
 import { useState } from "react"
-import { UtensilsCrossed, Search, MoreHorizontal } from "lucide-react"
+import { UtensilsCrossed, Search } from "lucide-react"
+import { AdminModal } from "@/components/admin/admin-modal"
+import { DishForm } from "@/components/admin/dish-form"
+import { ActionMenu } from "@/components/admin/action-menu"
+import { toast } from "sonner"
 
-const ALL_DISHES = [
-  { id: "d1", name: "Classic Espresso", category: "Coffee", price: 3.50, available: true },
-  { id: "d2", name: "Cappuccino", category: "Coffee", price: 4.50, available: true },
-  { id: "d3", name: "Iced Latte", category: "Coffee", price: 5.00, available: true },
-  { id: "d4", name: "Croissant", category: "Pastries", price: 3.00, available: true },
-  { id: "d5", name: "Blueberry Muffin", category: "Pastries", price: 3.50, available: true },
-  { id: "d6", name: "Avocado Toast", category: "Breakfast", price: 8.00, available: true },
-  { id: "d7", name: "Granola Bowl", category: "Breakfast", price: 7.50, available: false },
-  { id: "d8", name: "Matcha Latte", category: "Cold Drinks", price: 5.50, available: true },
-  { id: "d9", name: "Fresh Lemonade", category: "Cold Drinks", price: 4.00, available: true },
-  { id: "d10", name: "Flat White", category: "Coffee", price: 4.80, available: true },
-  { id: "d11", name: "Affogato", category: "Coffee", price: 5.00, available: false },
-  { id: "d12", name: "Spanish Latte", category: "Coffee", price: 5.50, available: true },
-  { id: "d13", name: "Cinnamon Roll", category: "Pastries", price: 4.50, available: true },
-  { id: "d14", name: "Cold Brew", category: "Cold Drinks", price: 4.50, available: true },
+interface DishItem {
+  id: string
+  name: string
+  category: string
+  categoryId: string
+  price: number
+  description?: string
+  ingredients: string[]
+  isAvailable: boolean
+  isFeatured: boolean
+}
+
+const CATEGORIES = [
+  { id: "cat1", name: "Coffee" },
+  { id: "cat2", name: "Pastries" },
+  { id: "cat3", name: "Breakfast" },
+  { id: "cat4", name: "Cold Drinks" },
 ]
 
-const CATEGORIES = ["All", "Coffee", "Pastries", "Breakfast", "Cold Drinks"]
+const CAT_NAMES = ["All", ...CATEGORIES.map((c) => c.name)]
+
+const INITIAL: DishItem[] = [
+  { id: "d1", name: "Classic Espresso", category: "Coffee", categoryId: "cat1", price: 3.50, ingredients: ["Arabica beans", "Filtered water"], isAvailable: true, isFeatured: true },
+  { id: "d2", name: "Cappuccino", category: "Coffee", categoryId: "cat1", price: 4.50, ingredients: ["Espresso", "Whole milk", "Cinnamon"], isAvailable: true, isFeatured: false },
+  { id: "d3", name: "Iced Latte", category: "Coffee", categoryId: "cat1", price: 5.00, ingredients: ["Espresso", "Cold milk", "Ice"], isAvailable: true, isFeatured: false },
+  { id: "d4", name: "Croissant", category: "Pastries", categoryId: "cat2", price: 3.00, ingredients: ["Puff pastry", "Butter", "Egg wash"], isAvailable: true, isFeatured: true },
+  { id: "d5", name: "Blueberry Muffin", category: "Pastries", categoryId: "cat2", price: 3.50, ingredients: ["Flour", "Blueberries", "Sugar", "Butter"], isAvailable: true, isFeatured: false },
+  { id: "d6", name: "Avocado Toast", category: "Breakfast", categoryId: "cat3", price: 8.00, ingredients: ["Sourdough bread", "Avocado", "Cherry tomatoes"], isAvailable: true, isFeatured: true },
+  { id: "d7", name: "Granola Bowl", category: "Breakfast", categoryId: "cat3", price: 7.50, ingredients: ["Greek yogurt", "Granola", "Mixed berries"], isAvailable: false, isFeatured: false },
+  { id: "d8", name: "Matcha Latte", category: "Cold Drinks", categoryId: "cat4", price: 5.50, ingredients: ["Matcha powder", "Oat milk", "Vanilla syrup"], isAvailable: true, isFeatured: false },
+  { id: "d9", name: "Fresh Lemonade", category: "Cold Drinks", categoryId: "cat4", price: 4.00, ingredients: ["Fresh lemon juice", "Sugar", "Mint"], isAvailable: true, isFeatured: false },
+  { id: "d10", name: "Flat White", category: "Coffee", categoryId: "cat1", price: 4.80, ingredients: ["Double espresso", "Steamed milk"], isAvailable: true, isFeatured: false },
+  { id: "d11", name: "Affogato", category: "Coffee", categoryId: "cat1", price: 5.00, ingredients: ["Vanilla gelato", "Double espresso"], isAvailable: false, isFeatured: false },
+  { id: "d12", name: "Cinnamon Roll", category: "Pastries", categoryId: "cat2", price: 4.50, ingredients: ["Dough", "Cinnamon", "Sugar", "Cream cheese"], isAvailable: true, isFeatured: false },
+  { id: "d13", name: "Cold Brew", category: "Cold Drinks", categoryId: "cat4", price: 4.50, ingredients: ["Cold brew coffee", "Filtered water"], isAvailable: true, isFeatured: false },
+  { id: "d14", name: "Spanish Latte", category: "Coffee", categoryId: "cat1", price: 5.50, ingredients: ["Espresso", "Condensed milk", "Whole milk"], isAvailable: true, isFeatured: false },
+]
 
 export default function DishesPage() {
+  const [dishes, setDishes] = useState(INITIAL)
   const [activeCategory, setActiveCategory] = useState("All")
   const [search, setSearch] = useState("")
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editing, setEditing] = useState<DishItem | null>(null)
 
-  const filtered = ALL_DISHES.filter((d) => {
+  const filtered = dishes.filter((d) => {
     const matchesCategory = activeCategory === "All" || d.category === activeCategory
     const matchesSearch = d.name.toLowerCase().includes(search.toLowerCase())
     return matchesCategory && matchesSearch
   })
+
+  const handleSubmit = (data: { name: string; price: number; category: string; description?: string; isAvailable?: boolean; isFeatured?: boolean; ingredients: string[] }) => {
+    const cat = CATEGORIES.find((c) => c.id === data.category)
+    const catName = cat?.name ?? "Unknown"
+
+    if (editing) {
+      setDishes(dishes.map((d) => d.id === editing.id ? { ...d, ...data, category: catName, categoryId: data.category, isAvailable: data.isAvailable ?? d.isAvailable, isFeatured: data.isFeatured ?? d.isFeatured } : d))
+      toast.success("Dish updated")
+    } else {
+      const newDish: DishItem = { id: `d${Date.now()}`, ...data, category: catName, categoryId: data.category, isAvailable: data.isAvailable ?? true, isFeatured: data.isFeatured ?? false }
+      setDishes([newDish, ...dishes])
+      toast.success("Dish added")
+    }
+    setModalOpen(false)
+    setEditing(null)
+  }
+
+  const handleDelete = (id: string) => {
+    setDishes(dishes.filter((d) => d.id !== id))
+    toast.success("Dish removed")
+  }
 
   return (
     <div className="p-4 space-y-4 pb-24">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold">Dishes</h1>
-          <p className="text-sm text-muted-foreground">{ALL_DISHES.length} total dishes</p>
+          <p className="text-sm text-muted-foreground">{dishes.length} total dishes</p>
         </div>
-        <button className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
+        <button onClick={() => { setEditing(null); setModalOpen(true) }} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
           + Add Dish
         </button>
       </div>
@@ -56,7 +103,7 @@ export default function DishesPage() {
       </div>
 
       <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2">
-        {CATEGORIES.map((cat) => (
+        {CAT_NAMES.map((cat) => (
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
@@ -80,21 +127,34 @@ export default function DishesPage() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <p className="text-sm font-semibold truncate">{dish.name}</p>
-                <span className={`size-1.5 rounded-full shrink-0 ${dish.available ? "bg-emerald-500" : "bg-muted-foreground"}`} />
+                <span className={`size-1.5 rounded-full shrink-0 ${dish.isAvailable ? "bg-emerald-500" : "bg-muted-foreground"}`} />
               </div>
-              <p className="text-xs text-muted-foreground">
-                {dish.category} · ETB {dish.price.toFixed(2)}
-              </p>
+              <p className="text-xs text-muted-foreground">{dish.category} · {dish.price.toFixed(2)} ETB</p>
             </div>
-            <button className="text-muted-foreground">
-              <MoreHorizontal className="size-5" />
-            </button>
+            <ActionMenu
+              actions={[
+                { label: "Edit", onClick: () => { setEditing(dish); setModalOpen(true) } },
+                { label: "Delete", onClick: () => handleDelete(dish.id), destructive: true },
+              ]}
+            />
           </div>
         ))}
-        {filtered.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-8">No dishes found</p>
-        )}
+        {filtered.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">No dishes found</p>}
       </div>
+
+      <AdminModal
+        open={modalOpen}
+        onOpenChange={(o) => { setModalOpen(o); if (!o) setEditing(null) }}
+        title={editing ? "Edit Dish" : "Add Dish"}
+        description={editing ? `Editing ${editing.name}` : "Add a new dish to your menu"}
+      >
+        <DishForm
+          categories={CATEGORIES}
+          defaultValues={editing ? { name: editing.name, price: editing.price, category: editing.categoryId, description: editing.description, isAvailable: editing.isAvailable, isFeatured: editing.isFeatured, ingredients: editing.ingredients } : undefined}
+          onSubmit={handleSubmit}
+          onCancel={() => { setModalOpen(false); setEditing(null) }}
+        />
+      </AdminModal>
     </div>
   )
 }
