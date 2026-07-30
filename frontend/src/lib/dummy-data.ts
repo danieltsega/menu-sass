@@ -6,7 +6,7 @@ export const dummyMenu: MenuData = {
     name: "Brew & Bean",
     slug: "brew-and-bean",
     description: "Artisan coffee & homemade pastries in the heart of the city.",
-    logo: "",
+    logo: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=48&h=48&fit=crop",
   },
   categories: [
     {
