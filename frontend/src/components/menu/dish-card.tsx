@@ -7,11 +7,16 @@ import type { Dish } from "@/types"
 interface DishCardProps {
   dish: Dish
   categoryName?: string
+  onClick?: () => void
 }
 
-export function DishCard({ dish, categoryName }: DishCardProps) {
+export function DishCard({ dish, categoryName, onClick }: DishCardProps) {
   return (
-    <div className="rounded-xl bg-card text-card-foreground shadow-md overflow-hidden">
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-xl bg-card text-card-foreground shadow-md overflow-hidden text-left w-full cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all active:scale-[0.98]"
+    >
       <div className="relative aspect-square">
         {dish.image ? (
           <div
@@ -33,6 +38,6 @@ export function DishCard({ dish, categoryName }: DishCardProps) {
           ETB {dish.price.toFixed(2)}
         </p>
       </div>
-    </div>
+    </button>
   )
 }
