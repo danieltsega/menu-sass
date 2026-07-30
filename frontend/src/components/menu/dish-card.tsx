@@ -14,7 +14,7 @@ export function DishCard({ dish, categoryName }: DishCardProps) {
   return (
     <div
       className={cn(
-        "rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden transition-opacity",
+        "rounded-xl bg-card text-card-foreground shadow-md overflow-hidden transition-opacity",
         !dish.isAvailable && "opacity-50"
       )}
     >
