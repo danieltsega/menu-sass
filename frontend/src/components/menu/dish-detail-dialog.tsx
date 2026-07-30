@@ -1,9 +1,7 @@
 "use client"
 
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-import Image from "next/image"
-import { PlaceholderImage } from "@/components/menu/placeholder-image"
-import { getCategoryIcon } from "@/components/menu/category-icons"
+import { DishImage } from "@/components/menu/dish-image"
 import type { Dish } from "@/types"
 
 interface DishDetailDialogProps {
@@ -25,24 +23,12 @@ export function DishDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <div className="relative aspect-square rounded-t-2xl overflow-hidden">
-          {dish.image ? (
-            <Image
-              src={dish.image}
-              alt={dish.name}
-              fill
-              sizes="(max-width: 640px) 100vw, 384px"
-              className="object-cover"
-            />
-          ) : (
-            <PlaceholderImage
-              className="w-full h-full"
-              icon={
-                categoryName
-                  ? getCategoryIcon(categoryName)
-                  : undefined
-              }
-            />
-          )}
+          <DishImage
+            src={dish.image}
+            alt={dish.name}
+            categoryName={categoryName}
+            sizes="(max-width: 640px) 100vw, 384px"
+          />
         </div>
 
         <div className="p-5 space-y-4">
