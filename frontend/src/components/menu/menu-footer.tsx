@@ -14,12 +14,12 @@ export function MenuFooter({ cafeName, tagline }: MenuFooterProps) {
         <p className="text-xs flex items-center justify-center gap-1 pt-2">
           Built with <Heart className="size-3 text-destructive fill-destructive" /> by{" "}
           <a
-            href="https://github.com/danieltsega"
+            href="https://github.com/YohannisWorku"
             target="_blank"
             rel="noopener noreferrer"
             className="font-medium text-foreground underline underline-offset-2 hover:text-primary transition-colors"
           >
-            Daniel Tsega
+            Yohannis Worku
           </a>
         </p>
       </div>
