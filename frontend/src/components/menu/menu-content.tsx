@@ -5,6 +5,7 @@ import type { MenuData } from "@/types"
 import { CafeHeader } from "@/components/menu/cafe-header"
 import { CategoryFilter } from "@/components/menu/category-filter"
 import { DishGrid } from "@/components/menu/dish-grid"
+import { MenuFooter } from "@/components/menu/menu-footer"
 
 export function MenuContent({ menu }: { menu: MenuData }) {
   const [activeCategory, setActiveCategory] = useState(menu.categories[0].id)
@@ -12,7 +13,7 @@ export function MenuContent({ menu }: { menu: MenuData }) {
   const currentCategory = menu.categories.find((c) => c.id === activeCategory)
 
   return (
-    <div className="max-w-lg mx-auto min-h-screen bg-background">
+    <div className="max-w-lg mx-auto min-h-screen bg-background flex flex-col">
       <CafeHeader name={menu.cafe.name} description={menu.cafe.description} />
 
       <CategoryFilter
@@ -29,6 +30,11 @@ export function MenuContent({ menu }: { menu: MenuData }) {
           />
         </div>
       )}
+
+      <MenuFooter
+        cafeName={menu.cafe.name}
+        tagline={menu.cafe.description}
+      />
     </div>
   )
 }
