@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { PlaceholderImage } from "@/components/menu/placeholder-image"
 import { getCategoryIcon } from "@/components/menu/category-icons"
 import type { Dish } from "@/types"
@@ -19,9 +20,12 @@ export function DishCard({ dish, categoryName, onClick }: DishCardProps) {
     >
       <div className="relative aspect-square">
         {dish.image ? (
-          <div
-            className="w-full h-full bg-cover bg-center"
-            style={{ backgroundImage: `url(${dish.image})` }}
+          <Image
+            src={dish.image}
+            alt={dish.name}
+            fill
+            sizes="(max-width: 640px) 50vw, 33vw"
+            className="object-cover"
           />
         ) : (
           <PlaceholderImage

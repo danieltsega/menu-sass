@@ -1,9 +1,9 @@
 "use client"
 
 import { Dialog, DialogContent } from "@/components/ui/dialog"
+import Image from "next/image"
 import { PlaceholderImage } from "@/components/menu/placeholder-image"
 import { getCategoryIcon } from "@/components/menu/category-icons"
-import { Star } from "lucide-react"
 import type { Dish } from "@/types"
 
 interface DishDetailDialogProps {
@@ -26,9 +26,12 @@ export function DishDetailDialog({
       <DialogContent>
         <div className="relative aspect-square rounded-t-2xl overflow-hidden">
           {dish.image ? (
-            <div
-              className="w-full h-full bg-cover bg-center"
-              style={{ backgroundImage: `url(${dish.image})` }}
+            <Image
+              src={dish.image}
+              alt={dish.name}
+              fill
+              sizes="(max-width: 640px) 100vw, 384px"
+              className="object-cover"
             />
           ) : (
             <PlaceholderImage
@@ -39,12 +42,6 @@ export function DishDetailDialog({
                   : undefined
               }
             />
-          )}
-          {dish.isFeatured && (
-            <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-[11px] font-medium text-primary-foreground">
-              <Star className="size-3 fill-current" />
-              Featured
-            </span>
           )}
         </div>
 
