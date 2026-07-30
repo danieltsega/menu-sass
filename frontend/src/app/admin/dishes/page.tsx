@@ -55,7 +55,7 @@ export default function DishesPage() {
         />
       </div>
 
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4">
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2">
         {CATEGORIES.map((cat) => (
           <button
             key={cat}

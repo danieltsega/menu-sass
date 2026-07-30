@@ -13,7 +13,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.replace("/login")
+      router.replace("/portal")
     }
   }, [isAuthenticated, router])
 
@@ -38,7 +38,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <button
               onClick={() => {
                 logout()
-                router.replace("/login")
+                router.replace("/portal")
               }}
               className="flex items-center gap-1 text-muted-foreground hover:text-destructive transition-colors"
             >

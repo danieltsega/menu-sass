@@ -71,18 +71,6 @@ export default function AdminDashboard() {
           <StatCard key={stat.label} stat={stat} />
         ))}
       </div>
-
-      <div className="rounded-xl border bg-card p-4 space-y-3">
-        <h2 className="text-sm font-semibold">Quick Actions</h2>
-        <div className="grid grid-cols-2 gap-2">
-          <button className="rounded-lg border border-input bg-background px-3 py-3 text-left text-sm font-medium hover:bg-accent transition-colors">
-            {user?.role === "super_admin" ? "Add New Cafe" : "Add New Dish"}
-          </button>
-          <button className="rounded-lg border border-input bg-background px-3 py-3 text-left text-sm font-medium hover:bg-accent transition-colors">
-            {user?.role === "super_admin" ? "Manage Users" : "Manage Categories"}
-          </button>
-        </div>
-      </div>
     </div>
   )
 }
