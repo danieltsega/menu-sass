@@ -35,7 +35,7 @@ export function DishDetailDialog({
           <div className="space-y-1">
             <h2 className="text-xl font-bold leading-tight">{dish.name}</h2>
             <p className="text-lg font-semibold text-primary">
-              ETB {dish.price.toFixed(2)}
+              {dish.price.toFixed(2)} ETB
             </p>
           </div>
 

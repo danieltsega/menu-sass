@@ -29,7 +29,7 @@ export function DishCard({ dish, categoryName, onClick }: DishCardProps) {
           {dish.name}
         </h3>
         <p className="text-sm font-medium text-primary">
-          ETB {dish.price.toFixed(2)}
+          {dish.price.toFixed(2)} ETB
         </p>
       </div>
     </button>
