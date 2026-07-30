@@ -14,6 +14,7 @@ const cafeSchema = z.object({
   description: z.string().max(500).optional(),
   address: z.string().max(200).optional(),
   phone: z.string().max(30).optional(),
+  logo: z.string().optional(),
 })
 
 type CafeFormData = z.infer<typeof cafeSchema>
@@ -53,6 +54,11 @@ export function CafeForm({ defaultValues, onSubmit, onCancel }: CafeFormProps) {
       <div className="space-y-2">
         <Label htmlFor="phone">Phone</Label>
         <Input id="phone" placeholder="+251 911 234 567" {...register("phone")} />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="logo">Logo URL</Label>
+        <Input id="logo" placeholder="https://images.unsplash.com/photo-..." {...register("logo")} />
+        <p className="text-[10px] text-muted-foreground">Will support file upload when connected to backend.</p>
       </div>
       <div className="flex gap-3 pt-2">
         <Button type="button" variant="outline" className="flex-1" onClick={onCancel}>Cancel</Button>

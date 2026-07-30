@@ -5,6 +5,7 @@ import { useAuthStore } from "@/stores/auth-store"
 import { AdminModal } from "@/components/admin/admin-modal"
 import { UserForm } from "@/components/admin/user-form"
 import { ActionMenu } from "@/components/admin/action-menu"
+import { ConfirmDialog } from "@/components/admin/confirm-dialog"
 import { toast } from "sonner"
 
 interface UserItem {
@@ -28,6 +29,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState(INITIAL)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<UserItem | null>(null)
+  const [deleting, setDeleting] = useState<UserItem | null>(null)
 
   if (currentUser?.role !== "super_admin") {
     return <div className="p-4 text-center text-sm text-muted-foreground">Access restricted to super admins.</div>
@@ -46,9 +48,11 @@ export default function UsersPage() {
     setEditing(null)
   }
 
-  const handleDelete = (id: string) => {
-    setUsers(users.filter((u) => u.id !== id))
+  const handleDelete = () => {
+    if (!deleting) return
+    setUsers(users.filter((u) => u.id !== deleting.id))
     toast.success("User removed")
+    setDeleting(null)
   }
 
   return (
@@ -81,7 +85,7 @@ export default function UsersPage() {
             <ActionMenu
               actions={[
                 { label: "Edit", onClick: () => { setEditing(u); setModalOpen(true) } },
-                { label: "Delete", onClick: () => handleDelete(u.id), destructive: true },
+                { label: "Delete", onClick: () => setDeleting(u), destructive: true },
               ]}
             />
           </div>
@@ -100,6 +104,14 @@ export default function UsersPage() {
           onCancel={() => { setModalOpen(false); setEditing(null) }}
         />
       </AdminModal>
+
+      <ConfirmDialog
+        open={deleting !== null}
+        onOpenChange={(o) => { if (!o) setDeleting(null) }}
+        title="Delete User"
+        message={`Are you sure you want to delete "${deleting?.name}"? They will lose access to the admin panel. This action cannot be undone.`}
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { Coffee, CakeSlice, Sunrise, GlassWater } from "lucide-react"
 import { AdminModal } from "@/components/admin/admin-modal"
 import { CategoryForm } from "@/components/admin/category-form"
 import { ActionMenu } from "@/components/admin/action-menu"
+import { ConfirmDialog } from "@/components/admin/confirm-dialog"
 import { toast } from "sonner"
 
 interface CategoryItem {
@@ -33,6 +34,7 @@ export default function CategoriesPage() {
   const [categories, setCategories] = useState(INITIAL)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<CategoryItem | null>(null)
+  const [deleting, setDeleting] = useState<CategoryItem | null>(null)
 
   const handleSubmit = (data: { name: string; description?: string; displayOrder?: number }) => {
     if (editing) {
@@ -47,9 +49,11 @@ export default function CategoriesPage() {
     setEditing(null)
   }
 
-  const handleDelete = (id: string) => {
-    setCategories(categories.filter((c) => c.id !== id))
+  const handleDelete = () => {
+    if (!deleting) return
+    setCategories(categories.filter((c) => c.id !== deleting.id))
     toast.success("Category removed")
+    setDeleting(null)
   }
 
   return (
@@ -77,7 +81,7 @@ export default function CategoriesPage() {
             <ActionMenu
               actions={[
                 { label: "Edit", onClick: () => { setEditing(cat); setModalOpen(true) } },
-                { label: "Delete", onClick: () => handleDelete(cat.id), destructive: true },
+                { label: "Delete", onClick: () => setDeleting(cat), destructive: true },
               ]}
             />
           </div>
@@ -96,6 +100,14 @@ export default function CategoriesPage() {
           onCancel={() => { setModalOpen(false); setEditing(null) }}
         />
       </AdminModal>
+
+      <ConfirmDialog
+        open={deleting !== null}
+        onOpenChange={(o) => { if (!o) setDeleting(null) }}
+        title="Delete Category"
+        message={`Are you sure you want to delete "${deleting?.name}"? All dishes in this category will also be removed. This action cannot be undone.`}
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

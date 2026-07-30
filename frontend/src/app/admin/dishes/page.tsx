@@ -5,6 +5,7 @@ import { UtensilsCrossed, Search } from "lucide-react"
 import { AdminModal } from "@/components/admin/admin-modal"
 import { DishForm } from "@/components/admin/dish-form"
 import { ActionMenu } from "@/components/admin/action-menu"
+import { ConfirmDialog } from "@/components/admin/confirm-dialog"
 import { toast } from "sonner"
 
 interface DishItem {
@@ -51,6 +52,7 @@ export default function DishesPage() {
   const [search, setSearch] = useState("")
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<DishItem | null>(null)
+  const [deleting, setDeleting] = useState<DishItem | null>(null)
 
   const filtered = dishes.filter((d) => {
     const matchesCategory = activeCategory === "All" || d.category === activeCategory
@@ -74,9 +76,11 @@ export default function DishesPage() {
     setEditing(null)
   }
 
-  const handleDelete = (id: string) => {
-    setDishes(dishes.filter((d) => d.id !== id))
+  const handleDelete = () => {
+    if (!deleting) return
+    setDishes(dishes.filter((d) => d.id !== deleting.id))
     toast.success("Dish removed")
+    setDeleting(null)
   }
 
   return (
@@ -134,7 +138,7 @@ export default function DishesPage() {
             <ActionMenu
               actions={[
                 { label: "Edit", onClick: () => { setEditing(dish); setModalOpen(true) } },
-                { label: "Delete", onClick: () => handleDelete(dish.id), destructive: true },
+                { label: "Delete", onClick: () => setDeleting(dish), destructive: true },
               ]}
             />
           </div>
@@ -155,6 +159,14 @@ export default function DishesPage() {
           onCancel={() => { setModalOpen(false); setEditing(null) }}
         />
       </AdminModal>
+
+      <ConfirmDialog
+        open={deleting !== null}
+        onOpenChange={(o) => { if (!o) setDeleting(null) }}
+        title="Delete Dish"
+        message={`Are you sure you want to delete "${deleting?.name}"? This action cannot be undone.`}
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }
