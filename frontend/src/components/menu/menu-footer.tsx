@@ -34,7 +34,7 @@ export function MenuFooter({ cafeName, tagline }: MenuFooterProps) {
         </div>
 
         <p className="text-xs pt-2 border-t border-border">
-          Lomi-Teams
+          Built by Lomi-Teams
         </p>
       </div>
     </footer>
