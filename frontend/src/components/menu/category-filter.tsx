@@ -13,7 +13,7 @@ export function CategoryFilter({
   onSelect: (id: string) => void
 }) {
   return (
-    <div className="sticky top-0 z-10 bg-background border-b">
+    <div className="sticky top-0 z-10 bg-background">
       <div className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-hide">
         {categories.map((cat) => (
           <button
