@@ -1,6 +1,11 @@
 "use client"
 
-import { Store, MapPin, Phone, FileText } from "lucide-react"
+import { useState } from "react"
+import { Store, MapPin, Phone, FileText, Lock } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 
 const DUMMY_CAFE = {
   name: "Brew & Bean",
@@ -13,6 +18,31 @@ const DUMMY_CAFE = {
 }
 
 export default function CafeSettingsPage() {
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [passwordError, setPasswordError] = useState("")
+
+  const handlePasswordChange = () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError("Please fill in all fields")
+      return
+    }
+    if (newPassword.length < 6) {
+      setPasswordError("New password must be at least 6 characters")
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Passwords do not match")
+      return
+    }
+    setPasswordError("")
+    toast.success("Password updated successfully")
+    setCurrentPassword("")
+    setNewPassword("")
+    setConfirmPassword("")
+  }
+
   return (
     <div className="p-4 space-y-4 pb-24">
       <h1 className="text-xl font-bold">Cafe Settings</h1>
@@ -53,19 +83,54 @@ export default function CafeSettingsPage() {
           </div>
         </div>
 
-        <button className="w-full rounded-lg bg-primary py-2.5 text-sm font-medium text-primary-foreground">
+        <Button className="w-full">
           Edit Cafe Info
-        </button>
+        </Button>
       </div>
 
-      <div className="rounded-xl border bg-card p-4 space-y-3">
-        <h2 className="text-sm font-semibold">Danger Zone</h2>
-        <p className="text-xs text-muted-foreground">
-          Once you deactivate your cafe, all menu data will not be visible to customers.
-        </p>
-        <button className="rounded-lg border border-destructive text-destructive px-4 py-2 text-sm font-medium w-full hover:bg-destructive/5 transition-colors">
-          Deactivate Cafe
-        </button>
+      <div className="rounded-xl border bg-card p-4 space-y-4">
+        <div className="flex items-center gap-2">
+          <Lock className="size-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold">Change Password</h2>
+        </div>
+
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <Label htmlFor="current-password">Current Password</Label>
+            <Input
+              id="current-password"
+              type="password"
+              placeholder="Enter current password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="new-password">New Password</Label>
+            <Input
+              id="new-password"
+              type="password"
+              placeholder="Min 6 characters"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirm-password">Confirm New Password</Label>
+            <Input
+              id="confirm-password"
+              type="password"
+              placeholder="Re-enter new password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+          </div>
+          {passwordError && <p className="text-xs text-destructive">{passwordError}</p>}
+        </div>
+
+        <Button className="w-full" onClick={handlePasswordChange}>
+          Update Password
+        </Button>
       </div>
     </div>
   )
