@@ -7,6 +7,10 @@ import { Role } from '../types/enums';
 const router = Router();
 
 router.use(authenticate);
+
+router.get('/me', cafeController.getMyCafe);
+router.put('/me', validate(updateCafeSchema), cafeController.updateMyCafe);
+
 router.use(authorize(Role.SUPER_ADMIN));
 
 router.post('/', validate(createCafeSchema), cafeController.create);

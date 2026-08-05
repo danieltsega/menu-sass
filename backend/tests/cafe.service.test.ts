@@ -61,4 +61,37 @@ describe('Cafe Service', () => {
       expect(result.pagination.totalPages).toBe(5);
     });
   });
+
+  describe('getCafeByAdmin', () => {
+    it('should return the cafe owned by a user', async () => {
+      mockCafe.findOne.mockResolvedValue({ _id: 'id', admin: 'admin-id', name: 'Cafe' });
+      const result = await cafeService.getCafeByAdmin('admin-id');
+      expect(result._id).toBe('id');
+      expect(mockCafe.findOne).toHaveBeenCalledWith({ admin: 'admin-id' });
+    });
+
+    it('should throw if not found', async () => {
+      mockCafe.findOne.mockResolvedValue(null);
+      await expect(cafeService.getCafeByAdmin('admin-id')).rejects.toThrow('Cafe not found');
+    });
+  });
+
+  describe('updateCafeByAdmin', () => {
+    it('should update the cafe owned by a user', async () => {
+      mockCafe.findOne.mockResolvedValue({ _id: 'id', admin: 'admin-id' });
+      mockCafe.findByIdAndUpdate.mockResolvedValue({ _id: 'id', name: 'Updated' });
+      const result = await cafeService.updateCafeByAdmin('admin-id', { name: 'Updated' });
+      expect(result.name).toBe('Updated');
+      expect(mockCafe.findByIdAndUpdate).toHaveBeenCalledWith(
+        'id',
+        { name: 'Updated' },
+        { new: true, runValidators: true }
+      );
+    });
+
+    it('should throw if cafe not owned by user', async () => {
+      mockCafe.findOne.mockResolvedValue(null);
+      await expect(cafeService.updateCafeByAdmin('admin-id', { name: 'X' })).rejects.toThrow('Cafe not found');
+    });
+  });
 });

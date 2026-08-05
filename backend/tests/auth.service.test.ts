@@ -85,4 +85,35 @@ describe('Auth Service', () => {
       await expect(authService.refresh('bad-token')).rejects.toThrow();
     });
   });
+
+  describe('changePassword', () => {
+    it('should throw if user not found', async () => {
+      mockUser.findById.mockResolvedValue(null);
+      await expect(
+        authService.changePassword('bad-id', 'old', 'newpass123')
+      ).rejects.toThrow('User not found');
+    });
+
+    it('should throw if current password is incorrect', async () => {
+      mockUser.findById.mockResolvedValue({
+        _id: 'id',
+        comparePassword: vi.fn().mockResolvedValue(false),
+      });
+      await expect(
+        authService.changePassword('id', 'wrong', 'newpass123')
+      ).rejects.toThrow('Current password is incorrect');
+    });
+
+    it('should update the password', async () => {
+      const save = vi.fn().mockResolvedValue({ _id: 'id' });
+      mockUser.findById.mockResolvedValue({
+        _id: 'id',
+        comparePassword: vi.fn().mockResolvedValue(true),
+        save,
+      });
+      const result = await authService.changePassword('id', 'correct', 'newpass123');
+      expect(save).toHaveBeenCalled();
+      expect(result._id).toBe('id');
+    });
+  });
 });

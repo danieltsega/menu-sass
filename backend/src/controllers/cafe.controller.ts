@@ -50,3 +50,21 @@ export const remove = async (req: Request<IdParams>, res: Response, next: NextFu
     next(error);
   }
 };
+
+export const getMyCafe = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const cafe = await cafeService.getCafeByAdmin(req.user!.userId);
+    res.status(200).json({ success: true, data: cafe });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateMyCafe = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const cafe = await cafeService.updateCafeByAdmin(req.user!.userId, req.body);
+    res.status(200).json({ success: true, data: cafe });
+  } catch (error) {
+    next(error);
+  }
+};

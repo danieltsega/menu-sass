@@ -5,7 +5,7 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import hpp from 'hpp';
 import morgan from 'morgan';
-import { authRoutes, cafeRoutes, categoryRoutes, dishRoutes, menuRoutes, uploadRoutes } from './routes';
+import { authRoutes, cafeRoutes, categoryRoutes, dishRoutes, menuRoutes, uploadRoutes, userRoutes } from './routes';
 import { errorHandler, notFound, sanitize } from './middleware';
 import config from './config';
 
@@ -38,6 +38,7 @@ app.use('/api/cafes/:cafeId/categories', categoryRoutes);
 app.use('/api/cafes/:cafeId/dishes', dishRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/users', userRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

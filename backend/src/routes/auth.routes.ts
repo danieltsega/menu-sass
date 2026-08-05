@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import * as authController from '../controllers/auth.controller';
-import { validate } from '../middleware';
-import { registerSchema, loginSchema, refreshSchema } from '../validators';
+import { authenticate, validate } from '../middleware';
+import { registerSchema, loginSchema, refreshSchema, changePasswordSchema } from '../validators';
 
 const router = Router();
+
+router.post('/change-password', authenticate, validate(changePasswordSchema), authController.changePassword);
 
 router.route('/register')
   .post(validate(registerSchema), authController.register)

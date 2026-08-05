@@ -21,6 +21,16 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
   }
 };
 
+export const changePassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.userId;
+    const user = await authService.changePassword(userId, req.body.currentPassword, req.body.newPassword);
+    res.status(200).json({ success: true, data: user });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const refresh = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { refreshToken } = req.body;

@@ -58,3 +58,30 @@ export const deleteCafe = async (id: string) => {
   }
   return cafe;
 };
+
+export const getCafeByAdmin = async (adminId: string) => {
+  const cafe = await Cafe.findOne({ admin: adminId });
+  if (!cafe) {
+    throw new Error('Cafe not found');
+  }
+  return cafe;
+};
+
+export const updateCafeByAdmin = async (
+  adminId: string,
+  data: Partial<{ name: string; slug: string; description: string; address: string; phone: string }>
+) => {
+  const cafe = await Cafe.findOne({ admin: adminId });
+  if (!cafe) {
+    throw new Error('Cafe not found');
+  }
+
+  if (data.slug) {
+    const existing = await Cafe.findOne({ slug: data.slug, _id: { $ne: cafe._id } });
+    if (existing) {
+      throw new Error('Cafe slug already exists');
+    }
+  }
+
+  return Cafe.findByIdAndUpdate(cafe._id, data, { new: true, runValidators: true });
+};

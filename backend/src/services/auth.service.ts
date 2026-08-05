@@ -71,6 +71,23 @@ export const refresh = async (refreshToken: string) => {
   return { user, tokens };
 };
 
+export const changePassword = async (userId: string, currentPassword: string, newPassword: string) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  const isMatch = await user.comparePassword(currentPassword);
+  if (!isMatch) {
+    throw new Error('Current password is incorrect');
+  }
+
+  user.password = newPassword;
+  await user.save();
+
+  return user;
+};
+
 export const logout = async (refreshToken: string): Promise<void> => {
   const decoded = verifyRefreshToken(refreshToken);
   const hashed = hashToken(refreshToken);
