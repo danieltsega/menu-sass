@@ -6,52 +6,63 @@ import { AdminModal } from "@/components/admin/admin-modal"
 import { UserForm } from "@/components/admin/user-form"
 import { ActionMenu } from "@/components/admin/action-menu"
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
+import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, getErrorMessage } from "@/hooks/use-api"
+import type { ApiUser } from "@/types/api"
 import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
 
-interface UserItem {
+interface EditingUser {
   id: string
   name: string
   email: string
   role: "super_admin" | "cafe_admin"
-  cafe?: string
 }
-
-const INITIAL: UserItem[] = [
-  { id: "u1", name: "Admin User", email: "admin@menusass.com", role: "super_admin" },
-  { id: "u2", name: "Cafe Owner", email: "cafe@brewbean.com", role: "cafe_admin", cafe: "Brew & Bean" },
-  { id: "u3", name: "Solomon A.", email: "solomon@greengarden.com", role: "cafe_admin", cafe: "Green Garden Bistro" },
-  { id: "u4", name: "Meron T.", email: "meron@pizzapiazza.com", role: "cafe_admin", cafe: "Pizza Piazza" },
-  { id: "u5", name: "Raj K.", email: "raj@tasteofindia.com", role: "cafe_admin", cafe: "Taste of India" },
-]
 
 export default function UsersPage() {
   const currentUser = useAuthStore((s) => s.user)
-  const [users, setUsers] = useState(INITIAL)
+  const { data: users = [], isPending } = useUsers()
+  const createUser = useCreateUser()
+  const updateUser = useUpdateUser()
+  const deleteUser = useDeleteUser()
+
   const [modalOpen, setModalOpen] = useState(false)
-  const [editing, setEditing] = useState<UserItem | null>(null)
-  const [deleting, setDeleting] = useState<UserItem | null>(null)
+  const [editing, setEditing] = useState<EditingUser | null>(null)
+  const [deleting, setDeleting] = useState<ApiUser | null>(null)
 
   if (currentUser?.role !== "super_admin") {
     return <div className="p-4 text-center text-sm text-muted-foreground">Access restricted to super admins.</div>
   }
 
-  const handleSubmit = (data: { name: string; email: string; password: string; role: "super_admin" | "cafe_admin" }) => {
+  const handleSubmit = async (data: { name: string; email: string; password: string; role: "super_admin" | "cafe_admin" }) => {
     if (editing) {
-      setUsers(users.map((u) => u.id === editing.id ? { ...u, name: data.name, email: data.email, role: data.role } : u))
-      toast.success("User updated")
+      try {
+        await updateUser.mutateAsync({ id: editing.id, data: { name: data.name, email: data.email, role: data.role } })
+        toast.success("User updated")
+      } catch (error) {
+        toast.error(getErrorMessage(error))
+        return
+      }
     } else {
-      const newUser: UserItem = { id: `u${Date.now()}`, name: data.name, email: data.email, role: data.role }
-      setUsers([newUser, ...users])
-      toast.success("User created")
+      try {
+        await createUser.mutateAsync(data)
+        toast.success("User created")
+      } catch (error) {
+        toast.error(getErrorMessage(error))
+        return
+      }
     }
     setModalOpen(false)
     setEditing(null)
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleting) return
-    setUsers(users.filter((u) => u.id !== deleting.id))
-    toast.success("User removed")
+    try {
+      await deleteUser.mutateAsync(deleting._id)
+      toast.success("User removed")
+    } catch (error) {
+      toast.error(getErrorMessage(error))
+    }
     setDeleting(null)
   }
 
@@ -67,30 +78,39 @@ export default function UsersPage() {
         </button>
       </div>
 
-      <div className="space-y-2">
-        {users.map((u) => (
-          <div key={u.id} className="rounded-xl border bg-card p-4 flex items-center gap-3">
-            <div className="size-10 rounded-full bg-muted flex items-center justify-center shrink-0 text-sm font-medium">
-              {u.name.charAt(0)}
+      {isPending ? (
+        <div className="flex justify-center py-10 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
+      ) : (
+        <div className="space-y-2">
+          {users.map((u) => (
+            <div key={u._id} className="rounded-xl border bg-card p-4 flex items-center gap-3">
+              <div className="size-10 rounded-full bg-muted flex items-center justify-center shrink-0 text-sm font-medium">
+                {u.name.charAt(0)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate">{u.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+              </div>
+              <div className="text-right shrink-0">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  {u.role.replace("_", " ")}
+                </span>
+                {!u.isActive && (
+                  <p className="text-[10px] font-medium text-destructive">Inactive</p>
+                )}
+              </div>
+              <ActionMenu
+                actions={[
+                  { label: "Edit", onClick: () => { setEditing({ id: u._id, name: u.name, email: u.email, role: u.role }); setModalOpen(true) } },
+                  { label: u.isActive ? "Deactivate" : "Activate", onClick: () => updateUser.mutateAsync({ id: u._id, data: { isActive: !u.isActive } }).then(() => toast.success(u.isActive ? "User deactivated" : "User activated")).catch((e) => toast.error(getErrorMessage(e))) },
+                  { label: "Delete", onClick: () => setDeleting(u), destructive: true },
+                ]}
+              />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold truncate">{u.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{u.email}{u.cafe ? ` · ${u.cafe}` : ""}</p>
-            </div>
-            <div className="text-right shrink-0">
-              <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                {u.role.replace("_", " ")}
-              </span>
-            </div>
-            <ActionMenu
-              actions={[
-                { label: "Edit", onClick: () => { setEditing(u); setModalOpen(true) } },
-                { label: "Delete", onClick: () => setDeleting(u), destructive: true },
-              ]}
-            />
-          </div>
-        ))}
-      </div>
+          ))}
+          {users.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">No users yet</p>}
+        </div>
+      )}
 
       <AdminModal
         open={modalOpen}

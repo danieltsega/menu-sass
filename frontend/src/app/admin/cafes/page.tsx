@@ -3,62 +3,81 @@
 import { useState } from "react"
 import Image from "next/image"
 import { useAuthStore } from "@/stores/auth-store"
-import { Store } from "lucide-react"
+import { Store, Loader2 } from "lucide-react"
 import { AdminModal } from "@/components/admin/admin-modal"
 import { CafeForm } from "@/components/admin/cafe-form"
 import { ActionMenu } from "@/components/admin/action-menu"
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
+import { useCafes, useUsers, useCreateCafe, useUpdateCafe, useDeleteCafe, getErrorMessage } from "@/hooks/use-api"
+import { resolveFileUrl } from "@/lib/api"
+import type { ApiCafe } from "@/types/api"
 import { toast } from "sonner"
 
-interface CafeItem {
+interface EditingCafe {
   id: string
   name: string
   slug: string
   description?: string
   address?: string
   phone?: string
+  admin?: string
   logo?: string
-  admin: string
-  dishes: number
-  active: boolean
 }
-
-const INITIAL: CafeItem[] = [
-  { id: "c1", name: "Brew & Bean", slug: "brew-and-bean", description: "Artisan coffee & homemade pastries", admin: "Cafe Owner", dishes: 14, active: true, logo: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=48&h=48&fit=crop" },
-  { id: "c2", name: "Green Garden Bistro", slug: "green-garden-bistro", admin: "Solomon A.", dishes: 22, active: true },
-  { id: "c3", name: "Pizza Piazza", slug: "pizza-piazza", admin: "Meron T.", dishes: 18, active: true },
-  { id: "c4", name: "Taste of India", slug: "taste-of-india", admin: "Raj K.", dishes: 30, active: true },
-  { id: "c5", name: "Sushi Zen", slug: "sushi-zen", admin: "Yuki M.", dishes: 25, active: false },
-]
 
 export default function CafesPage() {
   const user = useAuthStore((s) => s.user)
-  const [cafes, setCafes] = useState(INITIAL)
+  const { data: cafes = [], isPending } = useCafes()
+  const { data: users = [] } = useUsers()
+  const createCafe = useCreateCafe()
+  const updateCafe = useUpdateCafe()
+  const deleteCafe = useDeleteCafe()
+
   const [modalOpen, setModalOpen] = useState(false)
-  const [editing, setEditing] = useState<CafeItem | null>(null)
-  const [deleting, setDeleting] = useState<CafeItem | null>(null)
+  const [editing, setEditing] = useState<EditingCafe | null>(null)
+  const [deleting, setDeleting] = useState<ApiCafe | null>(null)
 
   if (user?.role !== "super_admin") {
     return <div className="p-4 text-center text-sm text-muted-foreground">Access restricted to super admins.</div>
   }
 
-  const handleSubmit = (data: { name: string; slug: string; description?: string; address?: string; phone?: string; logo?: string }) => {
+  const admins = users
+    .filter((u) => u.isActive && u.role === "cafe_admin")
+    .map((u) => ({ id: u._id, name: u.name }))
+
+  const handleSubmit = async (data: { name: string; slug: string; description?: string; address?: string; phone?: string; admin?: string; logo?: string }) => {
     if (editing) {
-      setCafes(cafes.map((c) => c.id === editing.id ? { ...c, ...data } : c))
-      toast.success("Cafe updated")
+      try {
+        await updateCafe.mutateAsync({ id: editing.id, data: { name: data.name, slug: data.slug, description: data.description, address: data.address, phone: data.phone, logo: data.logo } })
+        toast.success("Cafe updated")
+      } catch (error) {
+        toast.error(getErrorMessage(error))
+        return
+      }
     } else {
-      const newCafe: CafeItem = { id: `c${Date.now()}`, ...data, admin: user.name, dishes: 0, active: true }
-      setCafes([newCafe, ...cafes])
-      toast.success("Cafe created")
+      if (!data.admin) {
+        toast.error("Please select an admin user")
+        return
+      }
+      try {
+        await createCafe.mutateAsync(data)
+        toast.success("Cafe created")
+      } catch (error) {
+        toast.error(getErrorMessage(error))
+        return
+      }
     }
     setModalOpen(false)
     setEditing(null)
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleting) return
-    setCafes(cafes.filter((c) => c.id !== deleting.id))
-    toast.success("Cafe removed")
+    try {
+      await deleteCafe.mutateAsync(deleting._id)
+      toast.success("Cafe removed")
+    } catch (error) {
+      toast.error(getErrorMessage(error))
+    }
     setDeleting(null)
   }
 
@@ -74,32 +93,37 @@ export default function CafesPage() {
         </button>
       </div>
 
-      <div className="space-y-2">
-        {cafes.map((cafe) => (
-          <div key={cafe.id} className="rounded-xl border bg-card p-4 flex items-center gap-3">
-            <div className="size-10 rounded-lg bg-muted flex items-center justify-center shrink-0 overflow-hidden">
-              {cafe.logo ? (
-                <Image src={cafe.logo} alt={cafe.name} width={40} height={40} className="size-full object-cover" />
-              ) : (
-                <Store className="size-5 text-muted-foreground" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold truncate">{cafe.name}</p>
-                <span className={`size-1.5 rounded-full shrink-0 ${cafe.active ? "bg-emerald-500" : "bg-muted-foreground"}`} />
+      {isPending ? (
+        <div className="flex justify-center py-10 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
+      ) : (
+        <div className="space-y-2">
+          {cafes.map((cafe) => (
+            <div key={cafe._id} className="rounded-xl border bg-card p-4 flex items-center gap-3">
+              <div className="size-10 rounded-lg bg-muted flex items-center justify-center shrink-0 overflow-hidden">
+                {cafe.logo ? (
+                  <Image src={resolveFileUrl(cafe.logo) ?? ""} alt={cafe.name} width={40} height={40} className="size-full object-cover" />) :
+                  < Store className="size-5 text-muted-foreground" />
+                }
               </div>
-              <p className="text-xs text-muted-foreground truncate">{cafe.admin} · {cafe.dishes} dishes</p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold truncate">{cafe.name}</p>
+                  <span className={`size-1.5 rounded-full shrink-0 ${cafe.isActive ? "bg-emerald-500" : "bg-muted-foreground"}`} />
+                </div>
+                <p className="text-xs text-muted-foreground truncate">{cafe.adminName ?? "No admin"} · {cafe.dishCount ?? 0} dishes</p>
+              </div>
+              <ActionMenu
+                actions={[
+                  { label: "Edit", onClick: () => { setEditing({ id: cafe._id, name: cafe.name, slug: cafe.slug, description: cafe.description, address: cafe.address, phone: cafe.phone, admin: cafe.admin, logo: cafe.logo }); setModalOpen(true) } },
+                  { label: cafe.isActive ? "Deactivate" : "Activate", onClick: () => updateCafe.mutateAsync({ id: cafe._id, data: { isActive: !cafe.isActive } }).then(() => toast.success(cafe.isActive ? "Cafe deactivated" : "Cafe activated")).catch((e) => toast.error(getErrorMessage(e))) },
+                  { label: "Delete", onClick: () => setDeleting(cafe), destructive: true },
+                ]}
+              />
             </div>
-            <ActionMenu
-              actions={[
-                { label: "Edit", onClick: () => { setEditing(cafe); setModalOpen(true) } },
-                { label: "Delete", onClick: () => setDeleting(cafe), destructive: true },
-              ]}
-            />
-          </div>
-        ))}
-      </div>
+          ))}
+          {cafes.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">No cafes yet</p>}
+        </div>
+      )}
 
       <AdminModal
         open={modalOpen}
@@ -109,6 +133,7 @@ export default function CafesPage() {
       >
         <CafeForm
           defaultValues={editing ?? undefined}
+          admins={admins}
           onSubmit={handleSubmit}
           onCancel={() => { setModalOpen(false); setEditing(null) }}
         />

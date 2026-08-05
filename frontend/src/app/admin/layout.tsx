@@ -9,15 +9,15 @@ import { Toaster } from "sonner"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const { user, isAuthenticated, logout } = useAuthStore()
+  const { user, isAuthenticated, isRestoring, logout } = useAuthStore()
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isRestoring && !isAuthenticated) {
       router.replace("/portal")
     }
-  }, [isAuthenticated, router])
+  }, [isRestoring, isAuthenticated, router])
 
-  if (!isAuthenticated || !user) {
+  if (isRestoring || !isAuthenticated || !user) {
     return null
   }
 

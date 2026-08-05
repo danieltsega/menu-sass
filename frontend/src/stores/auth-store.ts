@@ -1,4 +1,6 @@
 import { create } from "zustand"
+import type { ApiUser, ApiTokens } from "@/types/api"
+import { api } from "@/lib/api"
 
 export type Role = "super_admin" | "cafe_admin"
 
@@ -9,69 +11,127 @@ export interface AdminUser {
   role: Role
   cafeId?: string
   cafeName?: string
+  isActive: boolean
+}
+
+interface Session {
+  user: ApiUser
+  accessToken: string
+  refreshToken: string
 }
 
 interface AuthState {
   user: AdminUser | null
   accessToken: string | null
+  refreshToken: string | null
   isAuthenticated: boolean
+  isRestoring: boolean
+  setSession: (session: Session) => void
+  setUser: (user: AdminUser) => void
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
-  logout: () => void
+  logout: () => Promise<void>
+  restoreSession: () => Promise<void>
 }
 
-const DUMMY_USERS: { email: string; password: string; user: AdminUser }[] = [
-  {
-    email: "admin@menusass.com",
-    password: "password123",
-    user: {
-      id: "u-super-001",
-      name: "Admin User",
-      email: "admin@menusass.com",
-      role: "super_admin",
-    },
-  },
-  {
-    email: "cafe@brewbean.com",
-    password: "password123",
-    user: {
-      id: "u-cafe-001",
-      name: "Cafe Owner",
-      email: "cafe@brewbean.com",
-      role: "cafe_admin",
-      cafeId: "cafe-001",
-      cafeName: "Brew & Bean",
-    },
-  },
-]
+const STORAGE_KEY = "menusass.auth"
 
-export const useAuthStore = create<AuthState>((set) => ({
+const readStoredSession = (): Session | null => {
+  if (typeof window === "undefined") return null
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    return JSON.parse(raw) as Session
+  } catch {
+    return null
+  }
+}
+
+const mapUser = (user: ApiUser): AdminUser => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  isActive: user.isActive,
+})
+
+const persist = (session: Session | null) => {
+  if (typeof window === "undefined") return
+  if (session) {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session))
+  } else {
+    window.localStorage.removeItem(STORAGE_KEY)
+  }
+}
+
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   accessToken: null,
+  refreshToken: null,
   isAuthenticated: false,
+  isRestoring: true,
 
-  login: async (email: string, password: string) => {
-    const match = DUMMY_USERS.find((u) => u.email === email && u.password === password)
-
-    if (!match) {
-      return { success: false, error: "Invalid email or password" }
-    }
-
-    const token = `dummy_token_${match.user.id}_${Date.now()}`
-
+  setSession: ({ user, accessToken, refreshToken }) => {
+    persist({ user, accessToken, refreshToken })
     set({
-      user: match.user,
-      accessToken: token,
+      user: mapUser(user),
+      accessToken,
+      refreshToken,
       isAuthenticated: true,
+      isRestoring: false,
     })
-
-    return { success: true }
   },
 
-  logout: () => {
-    set({
-      user: null,
-      accessToken: null,
-      isAuthenticated: false,
-    })
+  setUser: (user) => {
+    const current = readStoredSession()
+    if (current) persist({ ...current, user: { ...current.user, name: user.name, email: user.email } })
+    set({ user })
+  },
+
+  login: async (email: string, password: string) => {
+    try {
+      const { data } = await api.post<{ success: boolean; data: { user: ApiUser; tokens: ApiTokens } }>(
+        "/auth/login",
+        { email, password }
+      )
+      const { user, tokens } = data.data
+      get().setSession({ user, accessToken: tokens.accessToken, refreshToken: tokens.refreshToken })
+      return { success: true }
+    } catch (error) {
+      const { getErrorMessage } = await import("@/lib/api")
+      return { success: false, error: getErrorMessage(error, "Invalid email or password") }
+    }
+  },
+
+  logout: async () => {
+    const refreshToken = get().refreshToken
+    persist(null)
+    set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false, isRestoring: false })
+    if (refreshToken) {
+      try {
+        await api.post("/auth/logout", { refreshToken })
+      } catch {
+        // ignore logout errors; local session already cleared
+      }
+    }
+  },
+
+  restoreSession: async () => {
+    const stored = readStoredSession()
+    if (!stored) {
+      set({ isRestoring: false })
+      return
+    }
+
+    try {
+      const { data } = await api.post<{ success: boolean; data: { user: ApiUser; tokens: ApiTokens } }>(
+        "/auth/refresh",
+        { refreshToken: stored.refreshToken }
+      )
+      const { user, tokens } = data.data
+      get().setSession({ user, accessToken: tokens.accessToken, refreshToken: tokens.refreshToken })
+    } catch {
+      persist(null)
+      set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false, isRestoring: false })
+    }
   },
 }))

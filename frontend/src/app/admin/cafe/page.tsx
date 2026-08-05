@@ -1,39 +1,39 @@
 "use client"
 
 import { useState } from "react"
-import { Store, MapPin, Phone, FileText, Lock } from "lucide-react"
+import { Store, MapPin, Phone, FileText, Lock, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { AdminModal } from "@/components/admin/admin-modal"
 import { CafeForm } from "@/components/admin/cafe-form"
+import { useMyCafe, useUpdateMyCafe, useChangePassword, getErrorMessage } from "@/hooks/use-api"
+import { resolveFileUrl } from "@/lib/api"
 import { toast } from "sonner"
 
-const DUMMY_CAFE = {
-  name: "Brew & Bean",
-  slug: "brew-and-bean",
-  description: "Artisan coffee & homemade pastries in the heart of the city.",
-  address: "Bole Road, Addis Ababa",
-  phone: "+251 911 234 567",
-  admin: "Cafe Owner",
-  logo: "",
-}
-
 export default function CafeSettingsPage() {
-  const [cafeInfo, setCafeInfo] = useState(DUMMY_CAFE)
+  const { data: cafe, isPending } = useMyCafe()
+  const updateMyCafe = useUpdateMyCafe()
+  const changePassword = useChangePassword()
+
   const [editOpen, setEditOpen] = useState(false)
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [passwordError, setPasswordError] = useState("")
+  const [passwordLoading, setPasswordLoading] = useState(false)
 
-  const handleEditInfo = (data: { name: string; slug: string; description?: string; address?: string; phone?: string; logo?: string }) => {
-    setCafeInfo({ ...cafeInfo, ...data })
-    setEditOpen(false)
-    toast.success("Cafe info updated")
+  const handleEditInfo = async (data: { name: string; slug: string; description?: string; address?: string; phone?: string; logo?: string }) => {
+    try {
+      await updateMyCafe.mutateAsync(data)
+      toast.success("Cafe info updated")
+      setEditOpen(false)
+    } catch (error) {
+      toast.error(getErrorMessage(error))
+    }
   }
 
-  const handlePasswordChange = () => {
+  const handlePasswordChange = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
       setPasswordError("Please fill in all fields")
       return
@@ -47,10 +47,26 @@ export default function CafeSettingsPage() {
       return
     }
     setPasswordError("")
-    toast.success("Password updated successfully")
-    setCurrentPassword("")
-    setNewPassword("")
-    setConfirmPassword("")
+    setPasswordLoading(true)
+    try {
+      await changePassword.mutateAsync({ currentPassword, newPassword })
+      toast.success("Password updated successfully")
+      setCurrentPassword("")
+      setNewPassword("")
+      setConfirmPassword("")
+    } catch (error) {
+      setPasswordError(getErrorMessage(error, "Failed to update password"))
+    } finally {
+      setPasswordLoading(false)
+    }
+  }
+
+  if (isPending) {
+    return <div className="p-4 flex justify-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
+  }
+
+  if (!cafe) {
+    return <div className="p-4 text-center text-sm text-muted-foreground py-16">You do not own a cafe.</div>
   }
 
   return (
@@ -59,12 +75,16 @@ export default function CafeSettingsPage() {
 
       <div className="rounded-xl border bg-card p-4 space-y-4">
         <div className="flex items-center gap-4">
-          <div className="size-16 rounded-xl bg-muted flex items-center justify-center text-muted-foreground">
-            <Store className="size-8" />
+          <div className="size-16 rounded-xl bg-muted flex items-center justify-center text-muted-foreground overflow-hidden">
+            {cafe.logo ? (
+              <img src={resolveFileUrl(cafe.logo)} alt={cafe.name} className="size-full object-cover" />
+            ) : (
+              <Store className="size-8" />
+            )}
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold">{cafeInfo.name}</p>
-            <p className="text-xs text-muted-foreground">@{cafeInfo.slug}</p>
+            <p className="text-sm font-semibold">{cafe.name}</p>
+            <p className="text-xs text-muted-foreground">@{cafe.slug}</p>
           </div>
         </div>
 
@@ -73,21 +93,21 @@ export default function CafeSettingsPage() {
             <FileText className="size-4 text-muted-foreground mt-0.5" />
             <div className="flex-1">
               <p className="text-xs text-muted-foreground">Description</p>
-              <p className="text-sm">{cafeInfo.description}</p>
+              <p className="text-sm">{cafe.description || "No description"}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <MapPin className="size-4 text-muted-foreground mt-0.5" />
             <div className="flex-1">
               <p className="text-xs text-muted-foreground">Address</p>
-              <p className="text-sm">{cafeInfo.address}</p>
+              <p className="text-sm">{cafe.address || "No address"}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <Phone className="size-4 text-muted-foreground mt-0.5" />
             <div className="flex-1">
               <p className="text-xs text-muted-foreground">Phone</p>
-              <p className="text-sm">{cafeInfo.phone}</p>
+              <p className="text-sm">{cafe.phone || "No phone"}</p>
             </div>
           </div>
         </div>
@@ -104,7 +124,7 @@ export default function CafeSettingsPage() {
         description="Update your cafe details"
       >
         <CafeForm
-          defaultValues={{ name: cafeInfo.name, slug: cafeInfo.slug, description: cafeInfo.description, address: cafeInfo.address, phone: cafeInfo.phone }}
+          defaultValues={{ name: cafe.name, slug: cafe.slug, description: cafe.description, address: cafe.address, phone: cafe.phone, logo: cafe.logo }}
           onSubmit={handleEditInfo}
           onCancel={() => setEditOpen(false)}
         />
@@ -150,8 +170,8 @@ export default function CafeSettingsPage() {
           {passwordError && <p className="text-xs text-destructive">{passwordError}</p>}
         </div>
 
-        <Button className="w-full" onClick={handlePasswordChange}>
-          Update Password
+        <Button className="w-full" onClick={handlePasswordChange} disabled={passwordLoading}>
+          {passwordLoading ? "Updating..." : "Update Password"}
         </Button>
       </div>
     </div>

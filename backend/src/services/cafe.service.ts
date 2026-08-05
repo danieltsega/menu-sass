@@ -1,11 +1,13 @@
 import Cafe from '../models/Cafe';
+import User from '../models/User';
+import Dish from '../models/Dish';
 import { getPaginationParams, getPaginationMeta, PaginationMeta } from '../utils/pagination';
 
 export const createCafe = async (
   name: string,
   slug: string,
   admin: string,
-  extra?: { description?: string; address?: string; phone?: string }
+  extra?: { description?: string; address?: string; phone?: string; logo?: string }
 ) => {
   const existing = await Cafe.findOne({ slug });
   if (existing) {
@@ -22,7 +24,24 @@ export const getAllCafes = async (page?: number, limit?: number) => {
     Cafe.find().sort({ createdAt: -1 }).skip(pagination.skip).limit(pagination.limit),
     Cafe.countDocuments(),
   ]);
-  return { cafes, pagination: getPaginationMeta(total, pagination) };
+
+  const adminIds = [...new Set(cafes.map((c) => c.admin))];
+  const users = await User.find({ _id: { $in: adminIds } });
+  const userMap = new Map(users.map((u) => [u._id, u.name]));
+
+  const dishCounts = await Dish.aggregate([
+    { $match: { cafe: { $in: cafes.map((c) => c._id) } } },
+    { $group: { _id: '$cafe', count: { $sum: 1 } } },
+  ]);
+  const dishCountMap = new Map(dishCounts.map((d) => [d._id, d.count]));
+
+  const enriched = cafes.map((cafe) => ({
+    ...cafe.toJSON(),
+    adminName: userMap.get(cafe.admin) ?? null,
+    dishCount: dishCountMap.get(cafe._id) ?? 0,
+  }));
+
+  return { cafes: enriched, pagination: getPaginationMeta(total, pagination) };
 };
 
 export const getCafeById = async (id: string) => {
@@ -35,7 +54,7 @@ export const getCafeById = async (id: string) => {
 
 export const updateCafe = async (
   id: string,
-  data: Partial<{ name: string; slug: string; description: string; address: string; phone: string; isActive: boolean }>
+  data: Partial<{ name: string; slug: string; description: string; address: string; phone: string; logo: string; isActive: boolean }>
 ) => {
   if (data.slug) {
     const existing = await Cafe.findOne({ slug: data.slug, _id: { $ne: id } });
@@ -69,7 +88,7 @@ export const getCafeByAdmin = async (adminId: string) => {
 
 export const updateCafeByAdmin = async (
   adminId: string,
-  data: Partial<{ name: string; slug: string; description: string; address: string; phone: string }>
+  data: Partial<{ name: string; slug: string; description: string; address: string; phone: string; logo: string }>
 ) => {
   const cafe = await Cafe.findOne({ admin: adminId });
   if (!cafe) {

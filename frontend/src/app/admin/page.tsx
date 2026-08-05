@@ -1,13 +1,12 @@
 "use client"
 
 import { useAuthStore } from "@/stores/auth-store"
-import { Coffee, Store, Users, UtensilsCrossed, TrendingUp, TrendingDown } from "lucide-react"
+import { Store, Users, UtensilsCrossed, Coffee } from "lucide-react"
+import { useCafes, useUsers, useMyCafe, useDishes, useCategories } from "@/hooks/use-api"
 
 interface Stat {
   label: string
   value: string
-  change: string
-  trend: "up" | "down"
   icon: React.ReactNode
 }
 
@@ -19,17 +18,6 @@ function StatCard({ stat }: { stat: Stat }) {
         <span className="text-muted-foreground size-5">{stat.icon}</span>
       </div>
       <p className="text-2xl font-bold">{stat.value}</p>
-      <div className="flex items-center gap-1 text-xs">
-        {stat.trend === "up" ? (
-          <TrendingUp className="size-3 text-emerald-500" />
-        ) : (
-          <TrendingDown className="size-3 text-destructive" />
-        )}
-        <span className={stat.trend === "up" ? "text-emerald-500" : "text-destructive"}>
-          {stat.change}
-        </span>
-        <span className="text-muted-foreground">vs last month</span>
-      </div>
     </div>
   )
 }
@@ -37,32 +25,44 @@ function StatCard({ stat }: { stat: Stat }) {
 export default function AdminDashboard() {
   const user = useAuthStore((s) => s.user)
 
-  const superAdminStats: Stat[] = [
-    { label: "Total Cafes", value: "12", change: "+2", trend: "up", icon: <Store className="size-5" /> },
-    { label: "Total Dishes", value: "284", change: "+18", trend: "up", icon: <UtensilsCrossed className="size-5" /> },
-    { label: "Active Admins", value: "8", change: "+1", trend: "up", icon: <Users className="size-5" /> },
-    { label: "Categories", value: "36", change: "-2", trend: "down", icon: <Coffee className="size-5" /> },
-  ]
+  const isSuper = user?.role === "super_admin"
+  const { data: cafes = [] } = useCafes()
+  const { data: users = [] } = useUsers()
+  const { data: myCafe } = useMyCafe(!isSuper)
+  const cafeId = myCafe?._id
+  const { data: dishes = [] } = useDishes(cafeId)
+  const { data: categories = [] } = useCategories(cafeId)
 
-  const cafeAdminStats: Stat[] = [
-    { label: "Total Dishes", value: "14", change: "+3", trend: "up", icon: <UtensilsCrossed className="size-5" /> },
-    { label: "Categories", value: "4", change: "0", trend: "up", icon: <Coffee className="size-5" /> },
-    { label: "Active Dishes", value: "12", change: "+2", trend: "up", icon: <Store className="size-5" /> },
-    { label: "Avg. Price", value: "ETB 5.20", change: "+0.50", trend: "down", icon: <TrendingUp className="size-5" /> },
-  ]
+  let stats: Stat[]
 
-  const stats = user?.role === "super_admin" ? superAdminStats : cafeAdminStats
+  if (isSuper) {
+    const totalDishes = cafes.reduce((sum, c) => sum + (c.dishCount ?? 0), 0)
+    const activeAdmins = users.filter((u) => u.isActive && u.role === "cafe_admin").length
+    stats = [
+      { label: "Total Cafes", value: String(cafes.length), icon: <Store className="size-5" /> },
+      { label: "Total Dishes", value: String(totalDishes), icon: <UtensilsCrossed className="size-5" /> },
+      { label: "Active Admins", value: String(activeAdmins), icon: <Users className="size-5" /> },
+      { label: "Users", value: String(users.length), icon: <Coffee className="size-5" /> },
+    ]
+  } else {
+    const available = dishes.filter((d) => d.isAvailable).length
+    const avgPrice = dishes.length ? (dishes.reduce((sum, d) => sum + d.price, 0) / dishes.length) : 0
+    stats = [
+      { label: "Total Dishes", value: String(dishes.length), icon: <UtensilsCrossed className="size-5" /> },
+      { label: "Categories", value: String(categories.length), icon: <Coffee className="size-5" /> },
+      { label: "Available", value: String(available), icon: <Store className="size-5" /> },
+      { label: "Avg. Price", value: `ETB ${avgPrice.toFixed(2)}`, icon: <Users className="size-5" /> },
+    ]
+  }
 
   return (
     <div className="p-4 space-y-6">
       <div>
         <h1 className="text-xl font-bold">
-          {user?.role === "super_admin" ? "Super Admin Dashboard" : "Cafe Dashboard"}
+          {isSuper ? "Super Admin Dashboard" : "Cafe Dashboard"}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {user?.role === "super_admin"
-            ? "Manage all cafes and users"
-            : `Manage your cafe — ${user?.cafeName ?? ""}`}
+          {isSuper ? "Manage all cafes and users" : `Manage your cafe — ${myCafe?.name ?? "..."}`}
         </p>
       </div>
 

@@ -17,6 +17,17 @@ const mockCafe = vi.hoisted(() => Object.assign(vi.fn(), {
 
 vi.mock('../src/models/Cafe', () => ({ default: mockCafe }));
 
+const mockUser = vi.hoisted(() => ({
+  find: vi.fn().mockResolvedValue([]),
+}));
+
+const mockDish = vi.hoisted(() => ({
+  aggregate: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock('../src/models/User', () => ({ default: mockUser }));
+vi.mock('../src/models/Dish', () => ({ default: mockDish }));
+
 import * as cafeService from '../src/services/cafe.service';
 
 describe('Cafe Service', () => {
@@ -48,13 +59,19 @@ describe('Cafe Service', () => {
 
   describe('getAllCafes', () => {
     it('should return paginated cafes', async () => {
-      const cafes = [{ _id: '1', name: 'A' }, { _id: '2', name: 'B' }];
+      const cafes = [
+        { _id: '1', name: 'A', admin: 'u1', toJSON: () => ({ _id: '1', name: 'A', admin: 'u1' }) },
+        { _id: '2', name: 'B', admin: 'u2', toJSON: () => ({ _id: '2', name: 'B', admin: 'u2' }) },
+      ];
       const sortChain = { skip: vi.fn(() => ({ limit: vi.fn().mockResolvedValue(cafes) })) };
       mockCafe.find.mockReturnValue({ sort: vi.fn(() => sortChain) });
       mockCafe.countDocuments.mockResolvedValue(10);
+      mockUser.find.mockResolvedValue([{ _id: 'u1', name: 'Alice' }]);
+      mockDish.aggregate.mockResolvedValue([]);
 
       const result = await cafeService.getAllCafes(1, 2);
       expect(result.cafes).toHaveLength(2);
+      expect(result.cafes[0].adminName).toBe('Alice');
       expect(result.pagination.total).toBe(10);
       expect(result.pagination.page).toBe(1);
       expect(result.pagination.limit).toBe(2);

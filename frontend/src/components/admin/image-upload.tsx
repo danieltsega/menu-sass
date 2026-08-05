@@ -4,27 +4,32 @@ import { useRef, useState } from "react"
 import { ImagePlus, Loader2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useUploadImage } from "@/hooks/use-api"
+import { resolveFileUrl } from "@/lib/api"
+import { toast } from "sonner"
 
 interface ImageUploadProps {
   value?: string
   onChange: (value: string) => void
   aspect?: string
-  previewClass?: string
 }
 
-export function ImageUpload({ value, onChange, aspect = "aspect-square", previewClass }: ImageUploadProps) {
+export function ImageUpload({ value, onChange, aspect = "aspect-square" }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
+  const uploadImage = useUploadImage()
 
-  const handleFile = (file: File | undefined) => {
+  const handleFile = async (file: File | undefined) => {
     if (!file) return
     setLoading(true)
-    const reader = new FileReader()
-    reader.onload = () => {
-      onChange(reader.result as string)
+    try {
+      const { url } = await uploadImage.mutateAsync(file)
+      onChange(url)
+    } catch {
+      toast.error("Failed to upload image")
+    } finally {
       setLoading(false)
     }
-    reader.readAsDataURL(file)
   }
 
   return (
@@ -47,7 +52,7 @@ export function ImageUpload({ value, onChange, aspect = "aspect-square", preview
           )}
         >
           {value ? (
-            <img src={value} alt="Preview" className="size-full object-cover" />
+            <img src={resolveFileUrl(value)} alt="Preview" className="size-full object-cover" />
           ) : (
             <div className="flex flex-col items-center gap-1 text-muted-foreground">
               {loading ? (

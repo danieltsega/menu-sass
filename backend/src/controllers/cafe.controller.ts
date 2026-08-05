@@ -5,8 +5,8 @@ type IdParams = { id: string };
 
 export const create = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { name, slug, admin, description, address, phone } = req.body;
-    const cafe = await cafeService.createCafe(name, slug, admin, { description, address, phone });
+    const { name, slug, admin, logo, description, address, phone } = req.body;
+    const cafe = await cafeService.createCafe(name, slug, admin, { logo, description, address, phone });
     res.status(201).json({ success: true, data: cafe });
   } catch (error) {
     next(error);

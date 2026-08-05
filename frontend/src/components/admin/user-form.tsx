@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Controller } from "react-hook-form"
-import type { Role } from "@/stores/auth-store"
 
 const userSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
