@@ -7,11 +7,15 @@ import hpp from 'hpp';
 import morgan from 'morgan';
 import { authRoutes, cafeRoutes, categoryRoutes, dishRoutes, menuRoutes, uploadRoutes } from './routes';
 import { errorHandler, notFound, sanitize } from './middleware';
+import config from './config';
 
 const app = express();
 
 app.use(helmet({ crossOriginResourcePolicy: false }));
-app.use(cors());
+app.use(cors({
+  origin: config.clientUrl,
+  credentials: true,
+}));
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
