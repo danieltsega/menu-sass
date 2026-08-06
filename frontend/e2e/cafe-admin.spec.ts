@@ -96,6 +96,9 @@ test.describe("cafe admin", () => {
 
     const dishRow = await openRowMenu(page, dishName);
     await dishRow.getByRole("button", { name: "Edit" }).click();
+    const fileInput = page.locator('input[type="file"]');
+    await fileInput.setInputFiles(path.join(__dirname, "fixtures", "test-logo.png"));
+    await expect(page.getByRole("button", { name: "Remove" })).toBeVisible({ timeout: 15_000 });
     await page.getByLabel("Price (ETB)").fill("15");
     await page.getByRole("button", { name: "Save Changes" }).click();
     await expect(page.getByText("Dish updated")).toBeVisible();
@@ -103,6 +106,13 @@ test.describe("cafe admin", () => {
       "xpath=ancestor::div[contains(concat(' ', normalize-space(@class), ' '), ' bg-card ')][1]"
     );
     await expect(updatedRow).toContainText("15.00 ETB");
+
+    const imgEditRow = await openRowMenu(page, dishName);
+    await imgEditRow.getByRole("button", { name: "Edit" }).click();
+    await expect(page.getByRole("button", { name: "Remove" })).toBeVisible();
+    await page.getByRole("button", { name: "Remove" }).click();
+    await expect(page.getByRole("button", { name: "Choose Image" })).toBeVisible();
+    await page.getByRole("button", { name: "Cancel" }).click();
 
     const delRow = await openRowMenu(page, dishName);
     await delRow.getByRole("button", { name: "Delete" }).click();
