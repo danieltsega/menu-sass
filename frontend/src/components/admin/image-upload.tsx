@@ -13,9 +13,10 @@ interface ImageUploadProps {
   value?: string
   onChange: (value: string) => void
   aspect?: string
+  label?: string
 }
 
-export function ImageUpload({ value, onChange, aspect = "aspect-square" }: ImageUploadProps) {
+export function ImageUpload({ value, onChange, aspect = "aspect-square", label = "Upload logo" }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const uploadImage = useUploadImage()
@@ -67,7 +68,7 @@ export function ImageUpload({ value, onChange, aspect = "aspect-square" }: Image
               ) : (
                 <ImagePlus className="size-6" />
               )}
-              <span className="text-[10px]">Upload logo</span>
+              <span className="text-[10px]">{label}</span>
             </div>
           )}
         </button>
