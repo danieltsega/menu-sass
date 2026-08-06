@@ -9,8 +9,7 @@ export function resolveFileUrl(path?: string | null): string | undefined {
   if (!path) return undefined
   if (/^https?:\/\//.test(path)) return path
   if (path.startsWith("/")) {
-    const origin = baseURL.replace(/\/api\/?$/, "")
-    return `${origin}${path}`
+    return path
   }
   return path
 }
