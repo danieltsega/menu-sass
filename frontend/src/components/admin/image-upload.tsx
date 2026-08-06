@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
+import Image from "next/image"
 import { ImagePlus, Loader2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -52,7 +53,13 @@ export function ImageUpload({ value, onChange, aspect = "aspect-square" }: Image
           )}
         >
           {value ? (
-            <img src={resolveFileUrl(value)} alt="Preview" className="size-full object-cover" />
+            <Image
+              src={resolveFileUrl(value) ?? ""}
+              alt="Preview"
+              fill
+              sizes="96px"
+              className="size-full object-cover"
+            />
           ) : (
             <div className="flex flex-col items-center gap-1 text-muted-foreground">
               {loading ? (

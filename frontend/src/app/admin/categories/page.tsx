@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Coffee, CakeSlice, Sunrise, GlassWater, Loader2 } from "lucide-react"
+import { Coffee, CakeSlice, Sunrise, GlassWater } from "lucide-react"
 import { AdminModal } from "@/components/admin/admin-modal"
 import { CategoryForm } from "@/components/admin/category-form"
 import { ActionMenu } from "@/components/admin/action-menu"
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
+import { ListSkeleton } from "@/components/admin/list-skeleton"
 import { useCurrentCafeId } from "@/hooks/use-current-cafe"
 import { useCategories, useDishes, useCreateCategory, useUpdateCategory, useDeleteCategory, getErrorMessage } from "@/hooks/use-api"
 import type { ApiCategory } from "@/types/api"
@@ -85,7 +86,7 @@ export default function CategoriesPage() {
       </div>
 
       {isPending ? (
-        <div className="flex justify-center py-10 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
+        <ListSkeleton rows={4} />
       ) : (
         <div className="space-y-2">
           {categories.map((cat) => (

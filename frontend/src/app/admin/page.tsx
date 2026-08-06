@@ -3,6 +3,7 @@
 import { useAuthStore } from "@/stores/auth-store"
 import { Store, Users, UtensilsCrossed, Coffee } from "lucide-react"
 import { useCafes, useUsers, useMyCafe, useDishes, useCategories } from "@/hooks/use-api"
+import { DashboardSkeleton } from "@/components/admin/dashboard-skeleton"
 
 interface Stat {
   label: string
@@ -26,12 +27,20 @@ export default function AdminDashboard() {
   const user = useAuthStore((s) => s.user)
 
   const isSuper = user?.role === "super_admin"
-  const { data: cafes = [] } = useCafes()
-  const { data: users = [] } = useUsers()
-  const { data: myCafe } = useMyCafe(!isSuper)
+  const { data: cafes = [], isPending: cafesPending } = useCafes()
+  const { data: users = [], isPending: usersPending } = useUsers()
+  const { data: myCafe, isPending: myCafePending } = useMyCafe(!isSuper)
   const cafeId = myCafe?._id
-  const { data: dishes = [] } = useDishes(cafeId)
-  const { data: categories = [] } = useCategories(cafeId)
+  const { data: dishes = [], isPending: dishesPending } = useDishes(cafeId)
+  const { data: categories = [], isPending: categoriesPending } = useCategories(cafeId)
+
+  const isLoading = isSuper
+    ? cafesPending || usersPending
+    : myCafePending || (!!cafeId && (dishesPending || categoriesPending))
+
+  if (isLoading) {
+    return <DashboardSkeleton />
+  }
 
   let stats: Stat[]
 

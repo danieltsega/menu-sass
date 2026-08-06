@@ -3,11 +3,12 @@
 import { useState } from "react"
 import Image from "next/image"
 import { useAuthStore } from "@/stores/auth-store"
-import { Store, Loader2 } from "lucide-react"
+import { Store } from "lucide-react"
 import { AdminModal } from "@/components/admin/admin-modal"
 import { CafeForm } from "@/components/admin/cafe-form"
 import { ActionMenu } from "@/components/admin/action-menu"
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
+import { ListSkeleton } from "@/components/admin/list-skeleton"
 import { useCafes, useUsers, useCreateCafe, useUpdateCafe, useDeleteCafe, getErrorMessage } from "@/hooks/use-api"
 import { resolveFileUrl } from "@/lib/api"
 import type { ApiCafe } from "@/types/api"
@@ -94,7 +95,7 @@ export default function CafesPage() {
       </div>
 
       {isPending ? (
-        <div className="flex justify-center py-10 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
+        <ListSkeleton rows={4} />
       ) : (
         <div className="space-y-2">
           {cafes.map((cafe) => (

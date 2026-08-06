@@ -6,10 +6,10 @@ import { AdminModal } from "@/components/admin/admin-modal"
 import { UserForm } from "@/components/admin/user-form"
 import { ActionMenu } from "@/components/admin/action-menu"
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
+import { ListSkeleton } from "@/components/admin/list-skeleton"
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, getErrorMessage } from "@/hooks/use-api"
 import type { ApiUser } from "@/types/api"
 import { toast } from "sonner"
-import { Loader2 } from "lucide-react"
 
 interface EditingUser {
   id: string
@@ -79,7 +79,7 @@ export default function UsersPage() {
       </div>
 
       {isPending ? (
-        <div className="flex justify-center py-10 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
+        <ListSkeleton rows={4} />
       ) : (
         <div className="space-y-2">
           {users.map((u) => (

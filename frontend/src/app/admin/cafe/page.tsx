@@ -1,7 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Store, MapPin, Phone, FileText, Lock, Loader2 } from "lucide-react"
+import Image from "next/image"
+import { Store, MapPin, Phone, FileText, Lock } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -9,6 +10,7 @@ import { AdminModal } from "@/components/admin/admin-modal"
 import { CafeForm } from "@/components/admin/cafe-form"
 import { useMyCafe, useUpdateMyCafe, useChangePassword, getErrorMessage } from "@/hooks/use-api"
 import { resolveFileUrl } from "@/lib/api"
+import { SettingsSkeleton } from "@/components/admin/settings-skeleton"
 import { toast } from "sonner"
 
 export default function CafeSettingsPage() {
@@ -62,7 +64,7 @@ export default function CafeSettingsPage() {
   }
 
   if (isPending) {
-    return <div className="p-4 flex justify-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
+    return <SettingsSkeleton />
   }
 
   if (!cafe) {
@@ -77,7 +79,7 @@ export default function CafeSettingsPage() {
         <div className="flex items-center gap-4">
           <div className="size-16 rounded-xl bg-muted flex items-center justify-center text-muted-foreground overflow-hidden">
             {cafe.logo ? (
-              <img src={resolveFileUrl(cafe.logo)} alt={cafe.name} className="size-full object-cover" />
+              <Image src={resolveFileUrl(cafe.logo) ?? ""} alt={cafe.name} fill sizes="64px" className="size-full object-cover" />
             ) : (
               <Store className="size-8" />
             )}
