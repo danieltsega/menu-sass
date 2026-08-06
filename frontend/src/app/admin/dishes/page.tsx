@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { UtensilsCrossed, Search } from "lucide-react"
 import { AdminModal } from "@/components/admin/admin-modal"
 import { DishForm } from "@/components/admin/dish-form"
@@ -9,6 +10,7 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog"
 import { ListSkeleton } from "@/components/admin/list-skeleton"
 import { useCurrentCafeId } from "@/hooks/use-current-cafe"
 import { useCategories, useDishes, useCreateDish, useUpdateDish, useDeleteDish, getErrorMessage } from "@/hooks/use-api"
+import { resolveFileUrl } from "@/lib/api"
 import type { ApiDish } from "@/types/api"
 import { toast } from "sonner"
 
@@ -18,6 +20,7 @@ interface EditingDish {
   price: number
   category: string
   description?: string
+  image?: string
   ingredients: string[]
   isAvailable: boolean
   isFeatured: boolean
@@ -47,7 +50,7 @@ export default function DishesPage() {
     return matchesCategory && matchesSearch
   })
 
-  const handleSubmit = async (data: { name: string; price: number; category: string; description?: string; isAvailable?: boolean; isFeatured?: boolean; ingredients: string[] }) => {
+  const handleSubmit = async (data: { name: string; price: number; category: string; description?: string; image?: string; isAvailable?: boolean; isFeatured?: boolean; ingredients: string[] }) => {
     if (editing) {
       try {
         await updateDish.mutateAsync({ id: editing.id, data })
@@ -133,8 +136,12 @@ export default function DishesPage() {
             const catName = categories.find((c) => c._id === dish.category)?.name ?? "Uncategorized"
             return (
               <div key={dish._id} className="rounded-xl border bg-card p-4 flex items-center gap-3">
-                <div className="size-10 rounded-lg bg-muted flex items-center justify-center shrink-0 text-muted-foreground">
-                  <UtensilsCrossed className="size-5" />
+                <div className="size-10 rounded-lg bg-muted flex items-center justify-center shrink-0 text-muted-foreground overflow-hidden">
+                  {dish.image ? (
+                    <Image src={resolveFileUrl(dish.image) ?? ""} alt={dish.name} width={40} height={40} className="size-full object-cover" />
+                  ) : (
+                    <UtensilsCrossed className="size-5" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -145,7 +152,7 @@ export default function DishesPage() {
                 </div>
                 <ActionMenu
                   actions={[
-                    { label: "Edit", onClick: () => { setEditing({ id: dish._id, name: dish.name, price: dish.price, category: dish.category, description: dish.description, ingredients: dish.ingredients, isAvailable: dish.isAvailable, isFeatured: dish.isFeatured }); setModalOpen(true) } },
+                    { label: "Edit", onClick: () => { setEditing({ id: dish._id, name: dish.name, price: dish.price, category: dish.category, description: dish.description, image: dish.image, ingredients: dish.ingredients, isAvailable: dish.isAvailable, isFeatured: dish.isFeatured }); setModalOpen(true) } },
                     { label: "Delete", onClick: () => setDeleting(dish), destructive: true },
                   ]}
                 />
@@ -164,7 +171,7 @@ export default function DishesPage() {
       >
         <DishForm
           categories={categories.map((c) => ({ id: c._id, name: c.name }))}
-          defaultValues={editing ? { name: editing.name, price: editing.price, category: editing.category, description: editing.description, isAvailable: editing.isAvailable, isFeatured: editing.isFeatured, ingredients: editing.ingredients } : undefined}
+          defaultValues={editing ? { name: editing.name, price: editing.price, category: editing.category, description: editing.description, image: editing.image, isAvailable: editing.isAvailable, isFeatured: editing.isFeatured, ingredients: editing.ingredients } : undefined}
           onSubmit={handleSubmit}
           onCancel={() => { setModalOpen(false); setEditing(null) }}
         />
