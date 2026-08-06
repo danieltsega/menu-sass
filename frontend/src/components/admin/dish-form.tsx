@@ -74,6 +74,7 @@ export function DishForm({ categories, defaultValues, onSubmit, onCancel }: Dish
           <Controller
             name="category"
             control={control}
+            defaultValue={categories[0]?.id ?? ""}
             render={({ field }) => (
               <Select onValueChange={field.onChange} value={field.value}>
                 <SelectTrigger>

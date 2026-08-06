@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { inter } from "@/lib/fonts";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -21,6 +22,7 @@ export default function RootLayout({
           <QueryProvider>
             {children}
           </QueryProvider>
+          <Toaster position="top-center" />
         </ThemeProvider>
       </body>
     </html>

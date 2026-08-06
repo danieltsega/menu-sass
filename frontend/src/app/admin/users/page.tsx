@@ -33,7 +33,7 @@ export default function UsersPage() {
     return <div className="p-4 text-center text-sm text-muted-foreground">Access restricted to super admins.</div>
   }
 
-  const handleSubmit = async (data: { name: string; email: string; password: string; role: "super_admin" | "cafe_admin" }) => {
+  const handleSubmit = async (data: { name: string; email: string; password?: string; role: "super_admin" | "cafe_admin" }) => {
     if (editing) {
       try {
         await updateUser.mutateAsync({ id: editing.id, data: { name: data.name, email: data.email, role: data.role } })
@@ -43,8 +43,12 @@ export default function UsersPage() {
         return
       }
     } else {
+      if (!data.password) {
+        toast.error("Password is required")
+        return
+      }
       try {
-        await createUser.mutateAsync(data)
+        await createUser.mutateAsync({ ...data, password: data.password })
         toast.success("User created")
       } catch (error) {
         toast.error(getErrorMessage(error))

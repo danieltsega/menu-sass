@@ -12,7 +12,10 @@ import { Controller } from "react-hook-form"
 const userSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   email: z.string().email("Valid email required"),
-  password: z.string().min(6, "At least 6 characters").max(128),
+  password: z
+    .string()
+    .refine((v) => v.length === 0 || v.length >= 6, "At least 6 characters")
+    .optional(),
   role: z.enum(["super_admin", "cafe_admin"]),
 })
 

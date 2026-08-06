@@ -74,6 +74,7 @@ export function CafeForm({ defaultValues, admins, onSubmit, onCancel }: CafeForm
           <Controller
             name="admin"
             control={control}
+            defaultValue=""
             render={({ field }) => (
               <Select onValueChange={field.onChange} value={field.value} disabled={!!defaultValues}>
                 <SelectTrigger>

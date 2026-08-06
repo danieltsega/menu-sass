@@ -19,6 +19,7 @@ app.use(cors({
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
+  skip: () => config.nodeEnv !== 'production',
   message: { success: false, error: 'Too many requests, please try again later' },
 }));
 app.use(morgan('dev'));
