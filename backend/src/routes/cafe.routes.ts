@@ -11,12 +11,15 @@ router.use(authenticate);
 router.get('/me', cafeController.getMyCafe);
 router.put('/me', validate(updateCafeSchema), cafeController.updateMyCafe);
 
-router.use(authorize(Role.SUPER_ADMIN));
+const superOnly = Router();
+superOnly.use(authorize(Role.SUPER_ADMIN));
 
-router.post('/', validate(createCafeSchema), cafeController.create);
-router.get('/', cafeController.getAll);
-router.get('/:id', cafeController.getById);
-router.put('/:id', validate(updateCafeSchema), cafeController.update);
-router.delete('/:id', cafeController.remove);
+superOnly.post('/', validate(createCafeSchema), cafeController.create);
+superOnly.get('/', cafeController.getAll);
+superOnly.get('/:id', cafeController.getById);
+superOnly.put('/:id', validate(updateCafeSchema), cafeController.update);
+superOnly.delete('/:id', cafeController.remove);
+
+router.use(superOnly);
 
 export default router;

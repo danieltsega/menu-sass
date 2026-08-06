@@ -33,9 +33,9 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
-app.use('/api/cafes', cafeRoutes);
 app.use('/api/cafes/:cafeId/categories', categoryRoutes);
 app.use('/api/cafes/:cafeId/dishes', dishRoutes);
+app.use('/api/cafes', cafeRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/users', userRoutes);

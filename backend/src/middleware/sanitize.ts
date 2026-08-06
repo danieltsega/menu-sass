@@ -1,9 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 
 const sanitizeValue = (value: unknown): unknown => {
-  if (typeof value === 'string') {
-    return value.replace(/[$.]/g, '');
-  }
   if (Array.isArray(value)) {
     return value.map(sanitizeValue);
   }

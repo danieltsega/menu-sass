@@ -32,7 +32,6 @@ const cafeSchema = new Schema<ICafeDocument>(
   { timestamps: true }
 );
 
-cafeSchema.index({ slug: 1 });
 cafeSchema.index({ admin: 1 });
 
 const Cafe = mongoose.model<ICafeDocument>('Cafe', cafeSchema);
