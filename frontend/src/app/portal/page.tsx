@@ -65,7 +65,7 @@ export default function LoginPage() {
             <input
               id="email"
               type="email"
-              placeholder="admin@menusass.com"
+              placeholder="you@example.com"
               {...register("email")}
               className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
@@ -82,7 +82,7 @@ export default function LoginPage() {
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="password123"
+                placeholder="Enter your password"
                 {...register("password")}
                 className="w-full rounded-lg border border-input bg-background px-3 py-2.5 pr-10 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
@@ -103,23 +103,6 @@ export default function LoginPage() {
             {loading ? "Signing in..." : "Sign in"}
           </Button>
         </form>
-
-        <div className="rounded-xl border bg-muted/50 p-4 space-y-2">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Demo accounts
-          </p>
-          <div className="space-y-1 text-xs text-muted-foreground">
-            <p>
-              <span className="font-medium text-foreground">Super Admin:</span>{" "}
-              admin@menusass.com
-            </p>
-            <p>
-              <span className="font-medium text-foreground">Cafe Admin:</span>{" "}
-              cafe@brewbean.com
-            </p>
-            <p className="text-muted-foreground/60">Password: password123</p>
-          </div>
-        </div>
       </div>
     </div>
   )
