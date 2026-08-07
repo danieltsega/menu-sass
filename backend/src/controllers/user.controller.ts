@@ -7,7 +7,7 @@ export const getAll = async (req: Request, res: Response, next: NextFunction) =>
   try {
     const page = parseInt(req.query.page as string) || undefined;
     const limit = parseInt(req.query.limit as string) || undefined;
-    const { users, pagination } = await userService.getUsers(page, limit);
+    const { users, pagination } = await userService.getUsers(page, limit, req.user?.userId);
     res.status(200).json({ success: true, data: users, pagination });
   } catch (error) {
     next(error);

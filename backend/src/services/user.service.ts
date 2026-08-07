@@ -2,11 +2,12 @@ import { User } from '../models';
 import { Role } from '../types/enums';
 import { getPaginationParams, getPaginationMeta } from '../utils/pagination';
 
-export const getUsers = async (page?: number, limit?: number) => {
+export const getUsers = async (page?: number, limit?: number, excludeId?: string) => {
   const pagination = getPaginationParams(page, limit);
+  const filter = excludeId ? { _id: { $ne: excludeId } } : {};
   const [users, total] = await Promise.all([
-    User.find().sort({ createdAt: -1 }).skip(pagination.skip).limit(pagination.limit),
-    User.countDocuments(),
+    User.find(filter).sort({ createdAt: -1 }).skip(pagination.skip).limit(pagination.limit),
+    User.countDocuments(filter),
   ]);
   return { users, pagination: getPaginationMeta(total, pagination) };
 };

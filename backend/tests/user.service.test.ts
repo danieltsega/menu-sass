@@ -37,6 +37,25 @@ describe('User Service', () => {
       expect(result.users).toHaveLength(2);
       expect(result.pagination.total).toBe(10);
     });
+
+    it('should exclude the requesting user when excludeId is provided', async () => {
+      const sortChain = { skip: vi.fn(() => ({ limit: vi.fn().mockResolvedValue([]) })) };
+      mockUser.find.mockReturnValue({ sort: vi.fn(() => sortChain) });
+      mockUser.countDocuments.mockResolvedValue(3);
+
+      await userService.getUsers(1, 10, 'self-id');
+      expect(mockUser.find).toHaveBeenCalledWith({ _id: { $ne: 'self-id' } });
+      expect(mockUser.countDocuments).toHaveBeenCalledWith({ _id: { $ne: 'self-id' } });
+    });
+
+    it('should not exclude anyone when excludeId is omitted', async () => {
+      const sortChain = { skip: vi.fn(() => ({ limit: vi.fn().mockResolvedValue([]) })) };
+      mockUser.find.mockReturnValue({ sort: vi.fn(() => sortChain) });
+
+      await userService.getUsers(1, 10);
+      expect(mockUser.find).toHaveBeenCalledWith({});
+      expect(mockUser.countDocuments).toHaveBeenCalledWith({});
+    });
   });
 
   describe('createUser', () => {
