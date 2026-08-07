@@ -1,7 +1,7 @@
 import { expect, type Page, type APIRequestContext } from "@playwright/test";
 
 export const API_URL = "http://localhost:4000/api";
-export const SUPER_ADMIN = { email: "admin@menusass.com", password: "password123" };
+export const SUPER_ADMIN = { email: "danieltsega6658@gmail.com", password: "password123" };
 export const CAFE_ADMIN = { email: "cafe@brewbean.com", password: "password123" };
 
 export function uniqueName(prefix: string): string {

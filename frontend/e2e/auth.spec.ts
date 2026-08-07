@@ -4,7 +4,7 @@ import { loginAs, loginAndLogout, SUPER_ADMIN, CAFE_ADMIN } from "./helpers";
 test.describe("authentication", () => {
   test("rejects invalid credentials with an error toast", async ({ page }) => {
     await page.goto("/portal");
-    await page.getByLabel("Email").fill("admin@menusass.com");
+    await page.getByLabel("Email").fill(SUPER_ADMIN.email);
     await page.getByLabel("Password").fill("wrong-password");
     await page.getByRole("button", { name: "Sign in" }).click();
 
