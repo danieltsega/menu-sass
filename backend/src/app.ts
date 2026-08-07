@@ -13,7 +13,7 @@ const app = express();
 
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(cors({
-  origin: config.clientUrl,
+  origin: config.clientOrigins,
   credentials: true,
 }));
 app.use(rateLimit({

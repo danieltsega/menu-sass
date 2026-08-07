@@ -4,6 +4,10 @@ const config = {
   port: parseInt(process.env.PORT || '4000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   clientUrl: process.env.CLIENT_URL || 'http://localhost:3000',
+  clientOrigins: (process.env.CLIENT_URL || 'http://localhost:3000')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean),
   mongodbUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/menu-sass',
   jwtSecret: process.env.JWT_SECRET || 'fallback_dev_secret',
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || 'fallback_dev_refresh_secret',
