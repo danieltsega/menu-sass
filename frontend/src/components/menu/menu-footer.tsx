@@ -14,22 +14,27 @@ export function MenuFooter({ cafeName, tagline }: MenuFooterProps) {
           {tagline && <p className="text-xs">{tagline}</p>}
         </div>
 
-        <div className="flex items-center justify-center gap-6 pt-2">
+        <div className="pt-2">
+          <p className="font-semibold text-foreground">Want similar menu for your place?</p>
+          <p className="text-xs">Let&apos;s know!</p>
+        </div>
+
+        <div className="flex flex-col items-center gap-3 pt-2">
           <a
-            href="https://t.me/YohannisWorku"
+            href="https://t.me/JoAhood"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
           >
             <Send className="size-4" />
-            <span className="text-xs font-medium">@YohannisWorku</span>
+            <span className="text-xs font-medium text-foreground hover:text-primary transition-colors">Yohannis Worku</span>
           </a>
           <a
-            href="tel:+251900000000"
+            href="tel:+251912307517"
             className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
           >
             <Phone className="size-4" />
-            <span className="text-xs font-medium">+251 900 000 000</span>
+            <span className="text-xs font-medium">+2519 12307517</span>
           </a>
         </div>
 
