@@ -6,8 +6,8 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "MenuSass — Digital Cafe Menu",
-  description: "Browse cafe menus online",
+  title: "MenuSass — Digital Cafe Menus",
+  description: "Beautiful digital menus for cafes and restaurants. Scan, browse, and order the modern way.",
 };
 
 export default function RootLayout({
