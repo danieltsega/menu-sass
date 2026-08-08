@@ -15,7 +15,7 @@ export function DishGrid({ dishes, categoryName }: DishGridProps) {
 
   return (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 px-4 pb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 px-4 pb-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 md:gap-4">
         {dishes.map((dish) => (
           <DishCard
             key={dish.id}

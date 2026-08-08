@@ -14,7 +14,7 @@ export function CategoryFilter({
 }) {
   return (
     <div className="sticky top-0 z-10 bg-background">
-      <div className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-hide">
+      <div className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-hide md:flex-wrap md:justify-center md:overflow-visible">
         {categories.map((cat) => (
           <button
             key={cat.id}

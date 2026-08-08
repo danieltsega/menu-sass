@@ -8,7 +8,7 @@ interface MenuFooterProps {
 export function MenuFooter({ cafeName, tagline }: MenuFooterProps) {
   return (
     <footer className="mt-auto border-t bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
-      <div className="max-w-lg mx-auto space-y-4">
+      <div className="max-w-lg mx-auto space-y-4 md:max-w-2xl lg:max-w-4xl">
         <div className="space-y-1">
           <p className="font-semibold text-foreground">{cafeName}</p>
           {tagline && <p className="text-xs">{tagline}</p>}

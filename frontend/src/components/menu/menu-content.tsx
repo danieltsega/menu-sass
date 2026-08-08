@@ -13,7 +13,7 @@ export function MenuContent({ menu }: { menu: MenuData }) {
   const currentCategory = menu.categories.find((c) => c.id === activeCategory)
 
   return (
-    <div className="max-w-lg mx-auto min-h-screen bg-background flex flex-col">
+    <div className="max-w-lg mx-auto min-h-screen bg-background flex flex-col md:max-w-2xl lg:max-w-4xl xl:max-w-5xl">
       <CafeHeader name={menu.cafe.name} phone={menu.cafe.phone} logo={menu.cafe.logo} />
 
       <CategoryFilter

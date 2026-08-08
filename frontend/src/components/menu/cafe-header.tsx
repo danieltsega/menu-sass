@@ -17,7 +17,7 @@ export function CafeHeader({
   const [logoError, setLogoError] = useState(false)
 
   return (
-    <div className="bg-primary text-primary-foreground px-4 pb-6 pt-12">
+    <div className="bg-primary text-primary-foreground px-4 pb-6 pt-12 md:px-8 md:pb-8 md:pt-16">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="bg-primary-foreground/10 rounded-full p-2">

@@ -21,17 +21,17 @@ export function DishDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <div className="relative aspect-square rounded-t-2xl overflow-hidden">
+      <DialogContent className="md:max-w-2xl">
+        <div className="relative aspect-square rounded-t-2xl overflow-hidden md:aspect-video">
           <DishImage
             src={dish.image}
             alt={dish.name}
             categoryName={categoryName}
-            sizes="(max-width: 640px) 100vw, 384px"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 512px, 768px"
           />
         </div>
 
-        <div className="p-5 space-y-4">
+        <div className="p-5 space-y-4 md:grid md:grid-cols-2 md:gap-8 md:space-y-0">
           <div className="space-y-1">
             <h2 className="text-xl font-bold leading-tight">{dish.name}</h2>
             <p className="text-lg font-semibold text-primary">
@@ -46,7 +46,7 @@ export function DishDetailDialog({
           )}
 
           {dish.ingredients.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Ingredients
               </h3>
