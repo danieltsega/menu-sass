@@ -5,6 +5,7 @@ export interface Cafe {
   description?: string
   logo?: string
   phone?: string
+  address?: string
 }
 
 export interface Category {

@@ -14,7 +14,12 @@ export function MenuContent({ menu }: { menu: MenuData }) {
 
   return (
     <div className="max-w-lg mx-auto min-h-screen bg-background flex flex-col md:max-w-2xl lg:max-w-4xl xl:max-w-5xl">
-      <CafeHeader name={menu.cafe.name} phone={menu.cafe.phone} logo={menu.cafe.logo} />
+      <CafeHeader
+        name={menu.cafe.name}
+        phone={menu.cafe.phone}
+        address={menu.cafe.address}
+        logo={menu.cafe.logo}
+      />
 
       <CategoryFilter
         categories={menu.categories.map((c) => ({ id: c.id, name: c.name }))}
