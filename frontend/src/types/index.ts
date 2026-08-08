@@ -4,6 +4,7 @@ export interface Cafe {
   slug: string
   description?: string
   logo?: string
+  phone?: string
 }
 
 export interface Category {

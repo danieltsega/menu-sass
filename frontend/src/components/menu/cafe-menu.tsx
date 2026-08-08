@@ -14,6 +14,7 @@ function toMenuData(menu: ApiMenu) {
       slug: menu.cafe.slug,
       description: menu.cafe.description,
       logo: resolveFileUrl(menu.cafe.logo),
+      phone: menu.cafe.phone,
     },
     categories: menu.categories.map((c) => ({
       id: c._id,
