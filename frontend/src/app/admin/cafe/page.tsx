@@ -77,7 +77,7 @@ export default function CafeSettingsPage() {
 
       <div className="rounded-xl border bg-card p-4 space-y-4">
         <div className="flex items-center gap-4">
-          <div className="size-16 rounded-xl bg-muted flex items-center justify-center text-muted-foreground overflow-hidden">
+          <div className="relative size-16 rounded-xl bg-muted flex items-center justify-center text-muted-foreground overflow-hidden">
             {cafe.logo ? (
               <Image src={resolveFileUrl(cafe.logo) ?? ""} alt={cafe.name} fill sizes="64px" className="size-full object-cover" />
             ) : (
