@@ -14,13 +14,13 @@ export function CategoryFilter({
 }) {
   return (
     <div className="sticky top-0 z-10 bg-background">
-      <div className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-hide md:flex-wrap md:justify-center md:overflow-visible">
+      <div className="flex flex-wrap justify-center gap-2 px-4 py-3">
         {categories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => onSelect(cat.id)}
             className={cn(
-              "shrink-0 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+              "inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
               activeCategory === cat.id
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
