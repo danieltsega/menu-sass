@@ -22,7 +22,6 @@ function toMenuData(menu: ApiMenu) {
       name: c.name,
       description: c.description,
       displayOrder: c.displayOrder,
-      dishCount: c.dishCount,
       dishes: c.dishes.map((d) => ({
         id: d._id,
         name: d.name,
