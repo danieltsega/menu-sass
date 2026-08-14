@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from "react"
 import Image from "next/image"
-import { UtensilsCrossed, Search, GripVertical, Loader2, ChevronDown } from "lucide-react"
+import { UtensilsCrossed, Search, GripVertical } from "lucide-react"
 import {
   DndContext,
   PointerSensor,
@@ -10,9 +10,7 @@ import {
   useSensors,
   DragOverlay,
   closestCenter,
-  useDroppable,
   type DragStartEvent,
-  type DragOverEvent,
   type DragEndEvent,
 } from "@dnd-kit/core"
 import {
@@ -28,7 +26,7 @@ import { ActionMenu } from "@/components/admin/action-menu"
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
 import { ListSkeleton } from "@/components/admin/list-skeleton"
 import { useCurrentCafeId } from "@/hooks/use-current-cafe"
-import { useCategories, useDishesPaginated, useCreateDish, useUpdateDish, useDeleteDish, useReorderDishes, getErrorMessage } from "@/hooks/use-api"
+import { useCategories, useDishes, useCreateDish, useUpdateDish, useDeleteDish, useReorderDishes, getErrorMessage } from "@/hooks/use-api"
 import { resolveFileUrl } from "@/lib/api"
 import type { ApiDish } from "@/types/api"
 import { toast } from "sonner"
@@ -48,11 +46,9 @@ interface EditingDish {
 
 type ContainerMap = Record<string, string[]>
 
-function CategoryDropZone({ id, name, children }: { id: string; name: string; children: React.ReactNode }) {
-  const { setNodeRef } = useDroppable({ id })
-
+function CategoryDropZone({ name, children }: { name: string; children: React.ReactNode }) {
   return (
-    <div ref={setNodeRef} className="space-y-2">
+    <div className="space-y-2">
       <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">{name}</h2>
       {children}
     </div>
@@ -111,16 +107,12 @@ export default function DishesPage() {
   const { data: categories = [], isPending: categoriesPending } = useCategories(cafeId)
 
   const [search, setSearch] = useState("")
-  const [activeCategory, setActiveCategory] = useState<string>("All")
+  const [activeCategory, setActiveCategory] = useState<string>("")
 
-  const {
-    data: dishPages,
-    isPending: dishesPending,
-    hasNextPage,
-    fetchNextPage,
-    isFetchingNextPage,
-  } = useDishesPaginated(cafeId, 30, activeCategory === "All" ? undefined : activeCategory)
-  const dishes = useMemo(() => dishPages?.pages.flatMap((p) => p.data ?? []) ?? [], [dishPages])
+  const { data: dishes = [], isPending: dishesPending } = useDishes(cafeId)
+  const effectiveCategory = categories.some((c) => c._id === activeCategory)
+    ? activeCategory
+    : (categories[0]?._id ?? "")
   const createDish = useCreateDish(cafeId)
   const updateDish = useUpdateDish(cafeId)
   const deleteDish = useDeleteDish(cafeId)
@@ -168,14 +160,13 @@ export default function DishesPage() {
 
   const serverContainers = useMemo(() => buildContainers(dishes), [dishes, buildContainers])
 
-  const [dragContainers, setDragContainers] = useState<ContainerMap | null>(null)
-  const containers = dragContainers ?? serverContainers
+  const containers = serverContainers
 
   const isPending = categoriesPending || dishesPending
 
   const filtered = dishes.filter((d) => {
     const matchesSearch = d.name.toLowerCase().includes(search.toLowerCase())
-    const matchesCategory = activeCategory === "All" || d.category === activeCategory
+    const matchesCategory = d.category === effectiveCategory
     return matchesSearch && matchesCategory
   })
 
@@ -192,36 +183,6 @@ export default function DishesPage() {
     setDragging(dishesById.get(id) ?? null)
   }
 
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event
-    if (!over) return
-    const activeId = String(active.id)
-    const overId = String(over.id)
-
-    if (activeId === overId) return
-
-    const current = dragContainers ?? serverContainers
-    const overContainer = current[overId] ? overId : null
-    const activeContainer = Object.keys(current).find((key) =>
-      (current[key] ?? []).includes(activeId)
-    )
-
-    if (!overContainer || !activeContainer) return
-    if (activeContainer === overContainer) return
-
-    const activeItems = [...(current[activeContainer] ?? [])]
-    const overItems = [...(current[overContainer] ?? [])]
-    const oldIndex = activeItems.indexOf(activeId)
-    const newIndex = overItems.length
-    if (oldIndex >= 0) activeItems.splice(oldIndex, 1)
-    overItems.splice(newIndex, 0, activeId)
-    setDragContainers({
-      ...current,
-      [activeContainer]: activeItems,
-      [overContainer]: overItems,
-    })
-  }
-
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
     setDragging(null)
@@ -230,12 +191,9 @@ export default function DishesPage() {
     const activeId = String(active.id)
     const overId = String(over.id)
 
-    if (activeId === overId) {
-      setDragContainers(null)
-      return
-    }
+    if (activeId === overId) return
 
-    const current = dragContainers ?? serverContainers
+    const current = containers
     const isOverItem = Object.keys(current).some((key) =>
       (current[key] ?? []).includes(overId)
     )
@@ -273,19 +231,13 @@ export default function DishesPage() {
       return !dish || dish.category !== item.category || dish.displayOrder !== item.displayOrder
     })
 
-    if (changedDishes.length === 0) {
-      setDragContainers(null)
-      return
-    }
+    if (changedDishes.length === 0) return
 
-    setDragContainers(next)
     try {
       await reorderDishes.mutateAsync(items)
       toast.success("Dish order updated")
     } catch (error) {
       toast.error(getErrorMessage(error, "Failed to reorder dishes"))
-    } finally {
-      setDragContainers(null)
     }
   }
 
@@ -329,7 +281,7 @@ export default function DishesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold">Dishes</h1>
-          <p className="text-sm text-muted-foreground">{dishPages?.pages[0]?.pagination?.total ?? 0} total dishes</p>
+          <p className="text-sm text-muted-foreground">{dishes.length} total dishes</p>
         </div>
         <button onClick={() => { setEditing(null); setModalOpen(true) }} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
           + Add Dish
@@ -348,22 +300,13 @@ export default function DishesPage() {
       </div>
 
       <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1">
-        <button
-          onClick={() => setActiveCategory("All")}
-          className={cn(
-            "shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-            activeCategory === "All" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
-          )}
-        >
-          All
-        </button>
         {categories.map((cat) => (
           <button
             key={cat._id}
             onClick={() => setActiveCategory(cat._id)}
             className={cn(
               "shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-              activeCategory === cat._id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
+              effectiveCategory === cat._id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"
             )}
           >
             {cat.name}
@@ -372,7 +315,7 @@ export default function DishesPage() {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Drag dishes to reorder them or move them to another category.
+        Drag dishes to reorder them.
       </p>
 
       {isPending ? (
@@ -382,9 +325,8 @@ export default function DishesPage() {
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
-          onDragCancel={() => { setDragging(null); setDragContainers(null) }}
+          onDragCancel={() => setDragging(null)}
         >
           <div className="space-y-4">
             {containerOrder.map((categoryId) => {
@@ -392,7 +334,7 @@ export default function DishesPage() {
               const ids = (containers[categoryId] ?? []).filter((id) => visibleIds.has(id))
               if (ids.length === 0) return null
               return (
-                <CategoryDropZone key={categoryId} id={categoryId} name={name}>
+                <CategoryDropZone key={categoryId} name={name}>
                   <SortableContext items={ids} strategy={verticalListSortingStrategy}>
                     <div className="space-y-2">
                       {ids.map((id) => {
@@ -438,20 +380,6 @@ export default function DishesPage() {
             ) : null}
           </DragOverlay>
         </DndContext>
-      )}
-
-      {hasNextPage && filtered.length > 0 && (
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-            className="inline-flex items-center gap-2 rounded-full border border-input bg-background px-5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-60"
-          >
-            {isFetchingNextPage ? <Loader2 className="size-4 animate-spin" /> : <ChevronDown className="size-4" />}
-            Show more
-          </button>
-        </div>
       )}
 
       <AdminModal
