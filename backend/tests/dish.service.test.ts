@@ -40,6 +40,10 @@ const dishFindChain = (resolve: unknown) => ({
   })),
 });
 
+const dishSortChain = (resolve: unknown) => ({
+  sort: vi.fn().mockResolvedValue(resolve),
+});
+
 describe('Dish Service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -83,13 +87,14 @@ describe('Dish Service', () => {
   });
 
   describe('reorderDishes', () => {
-    it('should update category and displayOrder for each item', async () => {
+    it('should update category and displayOrder for each item and re-normalize category order', async () => {
       const items = [
         { id: 'd1', category: 'cat-2', displayOrder: 0 },
         { id: 'd2', category: 'cat-2', displayOrder: 1 },
       ];
       mockDish.find
         .mockResolvedValueOnce([{ _id: 'd1' }, { _id: 'd2' }])
+        .mockReturnValueOnce(dishSortChain([{ _id: 'd1' }, { _id: 'd2' }]))
         .mockReturnValueOnce(dishFindChain([]));
       mockCategory.find.mockResolvedValue([{ _id: 'cat-2' }]);
       mockDish.updateOne.mockResolvedValue({});
@@ -97,10 +102,13 @@ describe('Dish Service', () => {
 
       await dishService.reorderDishes(cafeId, items, userId, role);
 
-      expect(mockDish.updateOne).toHaveBeenCalledTimes(2);
       expect(mockDish.updateOne).toHaveBeenCalledWith(
         { _id: 'd1', cafe: cafeId },
         { $set: { category: 'cat-2', displayOrder: 0 } }
+      );
+      expect(mockDish.updateOne).toHaveBeenCalledWith(
+        { _id: 'd2', cafe: cafeId },
+        { $set: { category: 'cat-2', displayOrder: 1 } }
       );
     });
 
@@ -123,6 +131,27 @@ describe('Dish Service', () => {
           { id: 'd2', category: 'missing-cat', displayOrder: 1 },
         ], userId, role)
       ).rejects.toThrow('One or more categories not found in this cafe');
+    });
+
+    it('should re-normalize displayOrder across the affected category', async () => {
+      const items = [
+        { id: 'd1', category: 'cat-2', displayOrder: 1 },
+        { id: 'd2', category: 'cat-2', displayOrder: 0 },
+      ];
+      mockDish.find
+        .mockResolvedValueOnce([{ _id: 'd1' }, { _id: 'd2' }])
+        .mockReturnValueOnce(dishSortChain([{ _id: 'd1' }, { _id: 'd2' }]))
+        .mockReturnValueOnce(dishFindChain([]));
+      mockCategory.find.mockResolvedValue([{ _id: 'cat-2' }]);
+      mockDish.updateOne.mockResolvedValue({});
+      mockDish.countDocuments.mockResolvedValue(2);
+
+      await dishService.reorderDishes(cafeId, items, userId, role);
+
+      const normalizationCalls = mockDish.updateOne.mock.calls.filter(([filter, update]) =>
+        filter && filter._id && !filter.cafe && update && update.$set && update.$set.displayOrder === 0
+      );
+      expect(normalizationCalls.length).toBeGreaterThanOrEqual(1);
     });
   });
 });
