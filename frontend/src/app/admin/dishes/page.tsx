@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from "react"
 import Image from "next/image"
-import { UtensilsCrossed, Search, GripVertical } from "lucide-react"
+import { UtensilsCrossed, Search, GripVertical, Loader2, ChevronDown } from "lucide-react"
 import {
   DndContext,
   PointerSensor,
@@ -28,7 +28,7 @@ import { ActionMenu } from "@/components/admin/action-menu"
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
 import { ListSkeleton } from "@/components/admin/list-skeleton"
 import { useCurrentCafeId } from "@/hooks/use-current-cafe"
-import { useCategories, useDishes, useCreateDish, useUpdateDish, useDeleteDish, useReorderDishes, getErrorMessage } from "@/hooks/use-api"
+import { useCategories, useDishesPaginated, useCreateDish, useUpdateDish, useDeleteDish, useReorderDishes, getErrorMessage } from "@/hooks/use-api"
 import { resolveFileUrl } from "@/lib/api"
 import type { ApiDish } from "@/types/api"
 import { toast } from "sonner"
@@ -48,24 +48,12 @@ interface EditingDish {
 
 type ContainerMap = Record<string, string[]>
 
-function CategoryDropZone({ id, name, hasItems, hasSearch, children }: { id: string; name: string; hasItems: boolean; hasSearch: boolean; children: React.ReactNode }) {
-  const { setNodeRef, isOver } = useDroppable({ id })
-
-  const showEmptyTarget = !hasItems && !hasSearch
+function CategoryDropZone({ id, name, children }: { id: string; name: string; children: React.ReactNode }) {
+  const { setNodeRef } = useDroppable({ id })
 
   return (
     <div ref={setNodeRef} className="space-y-2">
       <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">{name}</h2>
-      {showEmptyTarget && (
-        <div
-          className={cn(
-            "rounded-xl border border-dashed p-4 text-center text-xs transition-colors",
-            isOver ? "border-primary bg-primary/5 text-primary" : "text-muted-foreground"
-          )}
-        >
-          Drop dishes here
-        </div>
-      )}
       {children}
     </div>
   )
@@ -121,7 +109,14 @@ function SortableDishRow({ dish, onEdit, onDelete }: { dish: ApiDish; onEdit: ()
 export default function DishesPage() {
   const cafeId = useCurrentCafeId()
   const { data: categories = [], isPending: categoriesPending } = useCategories(cafeId)
-  const { data: dishes = [], isPending: dishesPending } = useDishes(cafeId)
+  const {
+    data: dishPages,
+    isPending: dishesPending,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useDishesPaginated(cafeId)
+  const dishes = useMemo(() => dishPages?.pages.flatMap((p) => p.data ?? []) ?? [], [dishPages])
   const createDish = useCreateDish(cafeId)
   const updateDish = useUpdateDish(cafeId)
   const deleteDish = useDeleteDish(cafeId)
@@ -333,7 +328,7 @@ export default function DishesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold">Dishes</h1>
-          <p className="text-sm text-muted-foreground">{dishes.length} total dishes</p>
+          <p className="text-sm text-muted-foreground">{dishPages?.pages[0]?.pagination?.total ?? 0} total dishes</p>
         </div>
         <button onClick={() => { setEditing(null); setModalOpen(true) }} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
           + Add Dish
@@ -395,13 +390,7 @@ export default function DishesPage() {
               const name = categoryId === "__uncategorized__" ? "Uncategorized" : (categoryNameById.get(categoryId) ?? "Category")
               const ids = (containers[categoryId] ?? []).filter((id) => visibleIds.has(id))
               return (
-                <CategoryDropZone
-                  key={categoryId}
-                  id={categoryId}
-                  name={name}
-                  hasItems={ids.length > 0}
-                  hasSearch={search.trim().length > 0}
-                >
+                <CategoryDropZone key={categoryId} id={categoryId} name={name}>
                   <SortableContext items={ids} strategy={verticalListSortingStrategy}>
                     <div className="space-y-2">
                       {ids.map((id) => {
@@ -419,11 +408,6 @@ export default function DishesPage() {
                           />
                         )
                       })}
-                      {ids.length === 0 && (
-                        <div className="rounded-xl border border-dashed p-4 text-center text-xs text-muted-foreground">
-                          Drop dishes here
-                        </div>
-                      )}
                     </div>
                   </SortableContext>
                 </CategoryDropZone>
@@ -452,6 +436,20 @@ export default function DishesPage() {
             ) : null}
           </DragOverlay>
         </DndContext>
+      )}
+
+      {hasNextPage && (
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            className="inline-flex items-center gap-2 rounded-full border border-input bg-background px-5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-60"
+          >
+            {isFetchingNextPage ? <Loader2 className="size-4 animate-spin" /> : <ChevronDown className="size-4" />}
+            Show more
+          </button>
+        </div>
       )}
 
       <AdminModal
