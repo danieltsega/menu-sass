@@ -17,7 +17,7 @@ export const getPublicMenu = async (cafeSlug: string) => {
     cafe: cafe._id,
     category: { $in: categoryIds },
     isAvailable: true,
-  }).sort({ createdAt: -1 });
+  }).sort({ displayOrder: 1, createdAt: -1 });
 
   const dishesByCategory = dishes.reduce<Record<string, typeof dishes>>((acc, dish) => {
     if (!acc[dish.category]) acc[dish.category] = [];
