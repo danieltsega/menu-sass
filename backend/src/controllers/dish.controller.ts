@@ -21,8 +21,9 @@ export const getAll = async (req: Request<CafeParams>, res: Response, next: Next
   try {
     const page = parseInt(req.query.page as string) || undefined;
     const limit = parseInt(req.query.limit as string) || undefined;
+    const category = (req.query.category as string) || undefined;
     const { dishes, pagination } = await dishService.getDishesByCafe(
-      req.params.cafeId, req.user!.userId, req.user!.role, page, limit
+      req.params.cafeId, req.user!.userId, req.user!.role, page, limit, category
     );
     res.status(200).json({ success: true, data: dishes, pagination });
   } catch (error) {
