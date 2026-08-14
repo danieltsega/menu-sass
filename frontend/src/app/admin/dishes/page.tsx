@@ -109,21 +109,23 @@ function SortableDishRow({ dish, onEdit, onDelete }: { dish: ApiDish; onEdit: ()
 export default function DishesPage() {
   const cafeId = useCurrentCafeId()
   const { data: categories = [], isPending: categoriesPending } = useCategories(cafeId)
+
+  const [search, setSearch] = useState("")
+  const [activeCategory, setActiveCategory] = useState<string>("All")
+
   const {
     data: dishPages,
     isPending: dishesPending,
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
-  } = useDishesPaginated(cafeId)
+  } = useDishesPaginated(cafeId, 30, activeCategory === "All" ? undefined : activeCategory)
   const dishes = useMemo(() => dishPages?.pages.flatMap((p) => p.data ?? []) ?? [], [dishPages])
   const createDish = useCreateDish(cafeId)
   const updateDish = useUpdateDish(cafeId)
   const deleteDish = useDeleteDish(cafeId)
   const reorderDishes = useReorderDishes(cafeId)
 
-  const [search, setSearch] = useState("")
-  const [activeCategory, setActiveCategory] = useState<string>("All")
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<EditingDish | null>(null)
   const [deleting, setDeleting] = useState<ApiDish | null>(null)
@@ -185,7 +187,6 @@ export default function DishesPage() {
     if (ids.has("__uncategorized__")) ordered.push("__uncategorized__")
     return ordered
   }, [categories, containers])
-
   const handleDragStart = (event: DragStartEvent) => {
     const id = String(event.active.id)
     setDragging(dishesById.get(id) ?? null)
@@ -389,6 +390,7 @@ export default function DishesPage() {
             {containerOrder.map((categoryId) => {
               const name = categoryId === "__uncategorized__" ? "Uncategorized" : (categoryNameById.get(categoryId) ?? "Category")
               const ids = (containers[categoryId] ?? []).filter((id) => visibleIds.has(id))
+              if (ids.length === 0) return null
               return (
                 <CategoryDropZone key={categoryId} id={categoryId} name={name}>
                   <SortableContext items={ids} strategy={verticalListSortingStrategy}>
@@ -438,7 +440,7 @@ export default function DishesPage() {
         </DndContext>
       )}
 
-      {hasNextPage && (
+      {hasNextPage && filtered.length > 0 && (
         <div className="flex justify-center">
           <button
             type="button"
