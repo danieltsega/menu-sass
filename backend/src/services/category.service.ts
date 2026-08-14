@@ -19,6 +19,10 @@ export const createCategory = async (
   extra?: { description?: string; displayOrder?: number }
 ) => {
   await verifyCafeAccess(cafe, userId, role);
+  if (extra?.displayOrder == null) {
+    const lastCategory = await Category.findOne({ cafe }).sort({ displayOrder: -1 });
+    extra = { ...extra, displayOrder: lastCategory ? lastCategory.displayOrder + 1 : 0 };
+  }
   const category = await Category.create({ name, cafe, ...extra });
   return category;
 };
@@ -68,4 +72,32 @@ export const deleteCategory = async (cafeId: string, categoryId: string, userId:
     throw new Error('Category not found');
   }
   return category;
+};
+
+export const reorderCategories = async (
+  cafeId: string,
+  items: { id: string; displayOrder: number }[],
+  userId: string,
+  role: Role
+) => {
+  await verifyCafeAccess(cafeId, userId, role);
+
+  const ids = items.map((i) => i.id);
+  const categories = await Category.find({ _id: { $in: ids }, cafe: cafeId });
+  if (categories.length !== ids.length) {
+    throw new Error('One or more categories not found in this cafe');
+  }
+
+  await Promise.all(
+    items.map((item) =>
+      Category.updateOne({ _id: item.id, cafe: cafeId }, { $set: { displayOrder: item.displayOrder } })
+    )
+  );
+
+  const all = await Category.find({ cafe: cafeId }).sort({ displayOrder: 1, createdAt: -1 });
+  await Promise.all(
+    all.map((category, index) => Category.updateOne({ _id: category._id }, { $set: { displayOrder: index } }))
+  );
+
+  return getCategoriesByCafe(cafeId, userId, role);
 };
