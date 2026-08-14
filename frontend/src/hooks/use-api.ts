@@ -77,12 +77,12 @@ export function useDishes(cafeId?: string) {
   })
 }
 
-export function useDishesPaginated(cafeId?: string, pageSize = 30) {
+export function useDishesPaginated(cafeId?: string, pageSize = 30, category?: string) {
   return useInfiniteQuery({
-    queryKey: [...queryKeys.dishes(cafeId ?? "none"), "paginated", pageSize],
+    queryKey: [...queryKeys.dishes(cafeId ?? "none"), "paginated", pageSize, category ?? "all"],
     queryFn: async ({ pageParam }) => {
       const { data } = await api.get<ApiResponse<ApiDish[]>>(`/cafes/${cafeId}/dishes`, {
-        params: { page: pageParam, limit: pageSize },
+        params: { page: pageParam, limit: pageSize, ...(category ? { category } : {}) },
       })
       return data
     },
