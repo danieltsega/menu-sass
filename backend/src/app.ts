@@ -23,7 +23,7 @@ app.use(rateLimit({
   message: { success: false, error: 'Too many requests, please try again later' },
 }));
 app.use(morgan('dev'));
-app.use(express.json({ limit: '10kb' }));
+app.use(express.json({ limit: '1mb' }));
 app.use(sanitize);
 app.use(hpp());
 
