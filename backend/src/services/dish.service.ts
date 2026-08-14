@@ -123,5 +123,15 @@ export const reorderDishes = async (
     )
   );
 
+  const affectedCategories = [...new Set(items.map((i) => i.category))];
+  await Promise.all(
+    affectedCategories.map(async (categoryId) => {
+      const all = await Dish.find({ cafe: cafeId, category: categoryId }).sort({ displayOrder: 1, createdAt: -1 });
+      await Promise.all(
+        all.map((dish, index) => Dish.updateOne({ _id: dish._id }, { $set: { displayOrder: index } }))
+      );
+    })
+  );
+
   return getDishesByCafe(cafeId, userId, role);
 };
