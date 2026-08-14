@@ -216,10 +216,14 @@ export default function DishesPage() {
       }
     }
 
+    const changedContainers = Object.keys(next).filter(
+      (key) => (current[key] ?? []).join(",") !== (next[key] ?? []).join(",")
+    )
+
     const items: { id: string; category: string; displayOrder: number }[] = []
-    Object.entries(next).forEach(([key, ids]) => {
+    changedContainers.forEach((key) => {
       const category = key === "__uncategorized__" ? "" : key
-      ids.forEach((id, index) => {
+      ;(next[key] ?? []).forEach((id, index) => {
         const dish = dishesById.get(id)
         const target = category || (dish?.category ?? "")
         items.push({ id, category: target, displayOrder: index })
