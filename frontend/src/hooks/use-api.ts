@@ -14,6 +14,19 @@ const unwrap = async <T,>(request: Promise<{ data: ApiResponse<T> }>): Promise<T
   return data.data
 }
 
+const fetchAll = async <T,>(path: string, pageSize = 100): Promise<T[]> => {
+  const all: T[] = []
+  let page = 1
+  for (;;) {
+    const { data } = await api.get<ApiResponse<T[]>>(path, { params: { page, limit: pageSize } })
+    all.push(...(data.data ?? []))
+    const total = data.pagination?.total ?? all.length
+    if (!data.pagination || all.length >= total || data.data.length === 0) break
+    page += 1
+  }
+  return all
+}
+
 export const queryKeys = {
   cafes: ["cafes"] as const,
   cafe: (id: string) => ["cafes", id] as const,
@@ -51,7 +64,7 @@ export function useMyCafe(enabled = true) {
 export function useCategories(cafeId?: string) {
   return useQuery({
     queryKey: queryKeys.categories(cafeId ?? "none"),
-    queryFn: () => unwrap<ApiCategory[]>(api.get(`/cafes/${cafeId}/categories`)),
+    queryFn: () => fetchAll<ApiCategory>(`/cafes/${cafeId}/categories`),
     enabled: !!cafeId,
   })
 }
@@ -59,7 +72,7 @@ export function useCategories(cafeId?: string) {
 export function useDishes(cafeId?: string) {
   return useQuery({
     queryKey: queryKeys.dishes(cafeId ?? "none"),
-    queryFn: () => unwrap<ApiDish[]>(api.get(`/cafes/${cafeId}/dishes`)),
+    queryFn: () => fetchAll<ApiDish>(`/cafes/${cafeId}/dishes`),
     enabled: !!cafeId,
   })
 }
@@ -164,6 +177,15 @@ export function useDeleteDish(cafeId?: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => unwrap<null>(api.delete(`/cafes/${cafeId}/dishes/${id}`)),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.dishes(cafeId ?? "") }),
+  })
+}
+
+export function useReorderDishes(cafeId?: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (items: { id: string; category: string; displayOrder: number }[]) =>
+      unwrap<ApiDish[]>(api.put(`/cafes/${cafeId}/dishes/reorder`, { items })),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.dishes(cafeId ?? "") }),
   })
 }
