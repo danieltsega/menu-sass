@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery, type UseQueryOptions } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from "@tanstack/react-query"
 import { api, getErrorMessage } from "@/lib/api"
 import type {
   ApiResponse,
@@ -77,25 +77,6 @@ export function useDishes(cafeId?: string) {
   })
 }
 
-export function useDishesPaginated(cafeId?: string, pageSize = 30, category?: string) {
-  return useInfiniteQuery({
-    queryKey: [...queryKeys.dishes(cafeId ?? "none"), "paginated", pageSize, category ?? "all"],
-    queryFn: async ({ pageParam }) => {
-      const { data } = await api.get<ApiResponse<ApiDish[]>>(`/cafes/${cafeId}/dishes`, {
-        params: { page: pageParam, limit: pageSize, ...(category ? { category } : {}) },
-      })
-      return data
-    },
-    initialPageParam: 1,
-    getNextPageParam: (last) => {
-      const pagination = last.pagination
-      if (!pagination) return undefined
-      return pagination.page < pagination.totalPages ? pagination.page + 1 : undefined
-    },
-    enabled: !!cafeId,
-  })
-}
-
 export function useUsers() {
   return useQuery({
     queryKey: queryKeys.users,
@@ -109,14 +90,6 @@ export function useMenu(cafeSlug: string) {
     queryFn: () => unwrap<ApiMenu>(api.get(`/menu/${cafeSlug}`)),
     enabled: !!cafeSlug,
   })
-}
-
-export const fetchCategoryDishes = async (cafeSlug: string, categoryId: string, page: number, limit = 6) => {
-  const { data } = await api.get<ApiResponse<ApiDish[]>>(
-    `/menu/${cafeSlug}/categories/${categoryId}/dishes`,
-    { params: { page, limit } }
-  )
-  return data.data
 }
 
 export function useCreateCafe() {
