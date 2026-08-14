@@ -12,3 +12,12 @@ export const updateCategorySchema = z.object({
   displayOrder: z.number().int().min(0).optional(),
   isActive: z.boolean().optional(),
 });
+
+export const reorderCategoriesSchema = z.object({
+  items: z.array(
+    z.object({
+      id: z.string().min(1),
+      displayOrder: z.number().int().min(0),
+    })
+  ).min(1),
+});

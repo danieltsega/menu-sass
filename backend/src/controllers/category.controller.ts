@@ -62,3 +62,14 @@ export const remove = async (req: Request<CategoryParams>, res: Response, next: 
     next(error);
   }
 };
+
+export const reorder = async (req: Request<CafeParams>, res: Response, next: NextFunction) => {
+  try {
+    const { categories, pagination } = await categoryService.reorderCategories(
+      req.params.cafeId, req.body.items, req.user!.userId, req.user!.role
+    );
+    res.status(200).json({ success: true, data: categories, pagination });
+  } catch (error) {
+    next(error);
+  }
+};

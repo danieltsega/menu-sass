@@ -28,7 +28,10 @@ export const createDish = async (
     throw new Error('Category not found in this cafe');
   }
 
-  const dish = await Dish.create({ name, price, cafe, category, ...extra });
+  const lastDish = await Dish.findOne({ cafe, category }).sort({ displayOrder: -1 });
+  const displayOrder = lastDish ? lastDish.displayOrder + 1 : 0;
+
+  const dish = await Dish.create({ name, price, cafe, category, displayOrder, ...extra });
   return dish;
 };
 
@@ -36,7 +39,7 @@ export const getDishesByCafe = async (cafeId: string, userId: string, role: Role
   await verifyCafeAccess(cafeId, userId, role);
   const pagination = getPaginationParams(page, limit);
   const [dishes, total] = await Promise.all([
-    Dish.find({ cafe: cafeId }).sort({ createdAt: -1 }).skip(pagination.skip).limit(pagination.limit),
+    Dish.find({ cafe: cafeId }).sort({ displayOrder: 1, createdAt: -1 }).skip(pagination.skip).limit(pagination.limit),
     Dish.countDocuments({ cafe: cafeId }),
   ]);
   return { dishes, pagination: getPaginationMeta(total, pagination) };
@@ -89,4 +92,46 @@ export const deleteDish = async (cafeId: string, dishId: string, userId: string,
     throw new Error('Dish not found');
   }
   return dish;
+};
+
+export const reorderDishes = async (
+  cafeId: string,
+  items: { id: string; category: string; displayOrder: number }[],
+  userId: string,
+  role: Role
+) => {
+  await verifyCafeAccess(cafeId, userId, role);
+
+  const ids = items.map((i) => i.id);
+  const dishes = await Dish.find({ _id: { $in: ids }, cafe: cafeId });
+  if (dishes.length !== ids.length) {
+    throw new Error('One or more dishes not found in this cafe');
+  }
+
+  const categoryIds = [...new Set(items.map((i) => i.category))];
+  const categories = await Category.find({ _id: { $in: categoryIds }, cafe: cafeId });
+  if (categories.length !== categoryIds.length) {
+    throw new Error('One or more categories not found in this cafe');
+  }
+
+  await Promise.all(
+    items.map((item) =>
+      Dish.updateOne(
+        { _id: item.id, cafe: cafeId },
+        { $set: { category: item.category, displayOrder: item.displayOrder } }
+      )
+    )
+  );
+
+  const affectedCategories = [...new Set(items.map((i) => i.category))];
+  await Promise.all(
+    affectedCategories.map(async (categoryId) => {
+      const all = await Dish.find({ cafe: cafeId, category: categoryId }).sort({ displayOrder: 1, createdAt: -1 });
+      await Promise.all(
+        all.map((dish, index) => Dish.updateOne({ _id: dish._id }, { $set: { displayOrder: index } }))
+      );
+    })
+  );
+
+  return getDishesByCafe(cafeId, userId, role);
 };

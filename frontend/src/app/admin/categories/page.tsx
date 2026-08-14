@@ -1,16 +1,32 @@
 "use client"
 
-import { useState } from "react"
-import { Coffee, CakeSlice, Sunrise, GlassWater } from "lucide-react"
+import { useState, useCallback } from "react"
+import { Coffee, CakeSlice, Sunrise, GlassWater, GripVertical } from "lucide-react"
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { AdminModal } from "@/components/admin/admin-modal"
 import { CategoryForm } from "@/components/admin/category-form"
 import { ActionMenu } from "@/components/admin/action-menu"
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
 import { ListSkeleton } from "@/components/admin/list-skeleton"
 import { useCurrentCafeId } from "@/hooks/use-current-cafe"
-import { useCategories, useDishes, useCreateCategory, useUpdateCategory, useDeleteCategory, getErrorMessage } from "@/hooks/use-api"
+import { useCategories, useDishes, useCreateCategory, useUpdateCategory, useDeleteCategory, useReorderCategories, getErrorMessage } from "@/hooks/use-api"
 import type { ApiCategory } from "@/types/api"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 
 const ICON_MAP: Record<string, React.ReactNode> = {
   Coffee: <Coffee className="size-5" />,
@@ -26,6 +42,51 @@ interface EditingCategory {
   displayOrder: number
 }
 
+function SortableCategoryRow({
+  category,
+  dishCount,
+  onEdit,
+  onDelete,
+}: {
+  category: ApiCategory
+  dishCount: number
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: category._id })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={cn("rounded-xl border bg-card p-4 flex items-center gap-3", isDragging && "opacity-50")}
+    >
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        className="cursor-grab touch-none text-muted-foreground hover:text-foreground active:cursor-grabbing"
+        aria-label={`Drag ${category.name}`}
+      >
+        <GripVertical className="size-5" />
+      </button>
+      <div className="size-10 rounded-lg bg-muted flex items-center justify-center shrink-0 text-muted-foreground">
+        {ICON_MAP[category.name] ?? <Coffee className="size-5" />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold">{category.name}</p>
+        <p className="text-xs text-muted-foreground">{dishCount} dishes · Order {category.displayOrder}</p>
+      </div>
+      <ActionMenu
+        actions={[
+          { label: "Edit", onClick: onEdit },
+          { label: "Delete", onClick: onDelete, destructive: true },
+        ]}
+      />
+    </div>
+  )
+}
+
 export default function CategoriesPage() {
   const cafeId = useCurrentCafeId()
   const { data: categories = [], isPending } = useCategories(cafeId)
@@ -33,12 +94,48 @@ export default function CategoriesPage() {
   const createCategory = useCreateCategory(cafeId)
   const updateCategory = useUpdateCategory(cafeId)
   const deleteCategory = useDeleteCategory(cafeId)
+  const reorderCategories = useReorderCategories(cafeId)
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<EditingCategory | null>(null)
   const [deleting, setDeleting] = useState<ApiCategory | null>(null)
+  const [localCategories, setLocalCategories] = useState<ApiCategory[] | null>(null)
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
+  const displayCategories = localCategories ?? categories
 
   const dishCount = (categoryId: string) => dishes.filter((d) => d.category === categoryId).length
+
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event
+      if (!over || active.id === over.id) return
+
+      const oldIndex = displayCategories.findIndex((c) => c._id === active.id)
+      const newIndex = displayCategories.findIndex((c) => c._id === over.id)
+      if (oldIndex === -1 || newIndex === -1) return
+
+      setLocalCategories((prev) => {
+        const base = prev ?? categories
+        return arrayMove(base, oldIndex, newIndex)
+      })
+
+      const reordered = arrayMove(displayCategories, oldIndex, newIndex).map((c, index) => ({
+        id: c._id,
+        displayOrder: index,
+      }))
+
+      try {
+        await reorderCategories.mutateAsync(reordered)
+        setLocalCategories(null)
+        toast.success("Category order updated")
+      } catch (error) {
+        setLocalCategories(null)
+        toast.error(getErrorMessage(error, "Failed to update category order"))
+      }
+    },
+    [displayCategories, categories, reorderCategories]
+  )
 
   const handleSubmit = async (data: { name: string; description?: string; displayOrder?: number }) => {
     if (editing) {
@@ -78,7 +175,7 @@ export default function CategoriesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold">Menu Categories</h1>
-          <p className="text-sm text-muted-foreground">{categories.length} categories</p>
+          <p className="text-sm text-muted-foreground">{displayCategories.length} categories</p>
         </div>
         <button onClick={() => { setEditing(null); setModalOpen(true) }} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
           + Add Category
@@ -88,26 +185,22 @@ export default function CategoriesPage() {
       {isPending ? (
         <ListSkeleton rows={4} />
       ) : (
-        <div className="space-y-2">
-          {categories.map((cat) => (
-            <div key={cat._id} className="rounded-xl border bg-card p-4 flex items-center gap-3">
-              <div className="size-10 rounded-lg bg-muted flex items-center justify-center shrink-0 text-muted-foreground">
-                {ICON_MAP[cat.name] ?? <Coffee className="size-5" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold">{cat.name}</p>
-                <p className="text-xs text-muted-foreground">{dishCount(cat._id)} dishes · Order {cat.displayOrder}</p>
-              </div>
-              <ActionMenu
-                actions={[
-                  { label: "Edit", onClick: () => { setEditing({ id: cat._id, name: cat.name, description: cat.description, displayOrder: cat.displayOrder }); setModalOpen(true) } },
-                  { label: "Delete", onClick: () => setDeleting(cat), destructive: true },
-                ]}
-              />
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={displayCategories.map((c) => c._id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-2">
+              {displayCategories.map((cat) => (
+                <SortableCategoryRow
+                  key={cat._id}
+                  category={cat}
+                  dishCount={dishCount(cat._id)}
+                  onEdit={() => { setEditing({ id: cat._id, name: cat.name, description: cat.description, displayOrder: cat.displayOrder }); setModalOpen(true) }}
+                  onDelete={() => setDeleting(cat)}
+                />
+              ))}
+              {displayCategories.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">No categories yet</p>}
             </div>
-          ))}
-          {categories.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">No categories yet</p>}
-        </div>
+          </SortableContext>
+        </DndContext>
       )}
 
       <AdminModal

@@ -13,21 +13,19 @@ export const getPublicMenu = async (cafeSlug: string) => {
 
   const categoryIds = categories.map((c) => c._id);
 
-  const dishes = await Dish.find({
-    cafe: cafe._id,
-    category: { $in: categoryIds },
-    isAvailable: true,
-  }).sort({ createdAt: -1 });
+  const dishes = await Dish.find({ cafe: cafe._id, category: { $in: categoryIds }, isAvailable: true })
+    .sort({ displayOrder: 1, createdAt: -1 });
 
-  const dishesByCategory = dishes.reduce<Record<string, typeof dishes>>((acc, dish) => {
-    if (!acc[dish.category]) acc[dish.category] = [];
-    acc[dish.category].push(dish);
-    return acc;
-  }, {});
+  const dishesByCategory = new Map<string, unknown[]>();
+  dishes.forEach((dish) => {
+    const key = String(dish.category);
+    if (!dishesByCategory.has(key)) dishesByCategory.set(key, []);
+    dishesByCategory.get(key)!.push(dish);
+  });
 
   const categoriesWithDishes = categories.map((cat) => ({
     ...cat.toJSON(),
-    dishes: dishesByCategory[cat._id] || [],
+    dishes: dishesByCategory.get(String(cat._id)) || [],
   }));
 
   return {

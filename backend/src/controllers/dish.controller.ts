@@ -62,3 +62,15 @@ export const remove = async (req: Request<DishParams>, res: Response, next: Next
     next(error);
   }
 };
+
+export const reorder = async (req: Request<CafeParams>, res: Response, next: NextFunction) => {
+  try {
+    const { items } = req.body;
+    const { dishes, pagination } = await dishService.reorderDishes(
+      req.params.cafeId, items, req.user!.userId, req.user!.role
+    );
+    res.status(200).json({ success: true, data: dishes, pagination });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -44,6 +44,7 @@ export interface ApiDish {
   image?: string
   category: string
   cafe: string
+  displayOrder: number
   isAvailable: boolean
   isFeatured: boolean
   createdAt: string
