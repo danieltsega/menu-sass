@@ -35,16 +35,12 @@ export const createDish = async (
   return dish;
 };
 
-export const getDishesByCafe = async (cafeId: string, userId: string, role: Role, page?: number, limit?: number, category?: string) => {
+export const getDishesByCafe = async (cafeId: string, userId: string, role: Role, page?: number, limit?: number) => {
   await verifyCafeAccess(cafeId, userId, role);
   const pagination = getPaginationParams(page, limit);
-  const filter: Record<string, unknown> = { cafe: cafeId };
-  if (category) {
-    filter.category = category;
-  }
   const [dishes, total] = await Promise.all([
-    Dish.find(filter).sort({ displayOrder: 1, createdAt: -1 }).skip(pagination.skip).limit(pagination.limit),
-    Dish.countDocuments(filter),
+    Dish.find({ cafe: cafeId }).sort({ displayOrder: 1, createdAt: -1 }).skip(pagination.skip).limit(pagination.limit),
+    Dish.countDocuments({ cafe: cafeId }),
   ]);
   return { dishes, pagination: getPaginationMeta(total, pagination) };
 };
