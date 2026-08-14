@@ -17,6 +17,11 @@ export const errorHandler = (
     return;
   }
 
+  if ((err as { type?: string }).type === 'entity.too.large') {
+    res.status(413).json({ success: false, error: 'Request body too large (max 1MB)' });
+    return;
+  }
+
   const statusCode = err.message.includes('already in use') ? 409
     : err.message.includes('Invalid') ? 401
     : err.message.includes('incorrect') ? 400
