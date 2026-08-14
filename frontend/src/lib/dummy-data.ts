@@ -14,6 +14,7 @@ export const dummyMenu: MenuData = {
       name: "Coffee",
       description: "Handcrafted espresso drinks",
       displayOrder: 1,
+      dishCount: 14,
       dishes: [
         {
           id: "dish-1",
@@ -142,6 +143,7 @@ export const dummyMenu: MenuData = {
       name: "Pastries",
       description: "Freshly baked daily",
       displayOrder: 2,
+      dishCount: 3,
       dishes: [
         {
           id: "dish-5",
@@ -178,6 +180,7 @@ export const dummyMenu: MenuData = {
       name: "Breakfast",
       description: "Served all day",
       displayOrder: 3,
+      dishCount: 2,
       dishes: [
         {
           id: "dish-8",
@@ -205,6 +208,7 @@ export const dummyMenu: MenuData = {
       name: "Cold Drinks",
       description: "Refreshing beverages",
       displayOrder: 4,
+      dishCount: 3,
       dishes: [
         {
           id: "dish-10",
