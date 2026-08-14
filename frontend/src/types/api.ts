@@ -53,7 +53,6 @@ export interface ApiDish {
 
 export interface ApiCategoryWithDishes extends ApiCategory {
   dishes: ApiDish[]
-  dishCount: number
 }
 
 export interface ApiMenu {
