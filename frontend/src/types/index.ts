@@ -14,6 +14,7 @@ export interface Category {
   description?: string
   displayOrder: number
   dishes: Dish[]
+  dishCount: number
 }
 
 export interface Dish {
