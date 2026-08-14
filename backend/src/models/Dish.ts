@@ -10,6 +10,7 @@ export interface IDish {
   image?: string;
   category: string;
   cafe: string;
+  displayOrder: number;
   isAvailable: boolean;
   isFeatured: boolean;
   createdAt: Date;
@@ -28,6 +29,7 @@ const dishSchema = new Schema<IDishDocument>(
     image: { type: String },
     category: { type: String, ref: 'Category', required: true },
     cafe: { type: String, ref: 'Cafe', required: true },
+    displayOrder: { type: Number, default: 0 },
     isAvailable: { type: Boolean, default: true },
     isFeatured: { type: Boolean, default: false },
   },
