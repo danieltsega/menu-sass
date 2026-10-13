@@ -21,6 +21,7 @@
 !/public/uploads/.gitkeep
 /storage/*.key
 /storage/pail
+/storage/inertia-devtools
 /vendor
 Homestead.json
 Homestead.yaml

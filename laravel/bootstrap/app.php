@@ -2,6 +2,7 @@
 
 use App\Exceptions\ApiException;
 use App\Http\Middleware\EnsureRole;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Support\ApiResponse;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
@@ -28,11 +29,17 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => EnsureRole::class,
         ]);
 
+        $middleware->web(append: [
+            HandleInertiaRequests::class,
+        ]);
+
         $middleware->validateCsrfTokens(except: ['api/*']);
 
         $middleware->redirectGuestsTo(
-            fn ($request) => $request->is('api/*') ? null : url('/')
+            fn ($request) => $request->is('api/*') ? null : url('/portal')
         );
+
+        $middleware->redirectUsersTo('/admin');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
