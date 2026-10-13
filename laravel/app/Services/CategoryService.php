@@ -24,7 +24,7 @@ class CategoryService
             $attributes['display_order'] = $last === null ? 0 : $last + 1;
         }
 
-        return Category::create(['cafe_id' => $cafeId, ...$attributes]);
+        return Category::create(['cafe_id' => $cafeId, ...$attributes])->refresh();
     }
 
     /**

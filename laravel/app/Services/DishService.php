@@ -24,7 +24,7 @@ class DishService
         $last = Dish::where('cafe_id', $cafeId)->where('category_id', $categoryId)->max('display_order');
         $attributes['display_order'] = $last === null ? 0 : $last + 1;
 
-        return Dish::create(['cafe_id' => $cafeId, 'category_id' => $categoryId, ...$attributes]);
+        return Dish::create(['cafe_id' => $cafeId, 'category_id' => $categoryId, ...$attributes])->refresh();
     }
 
     /**

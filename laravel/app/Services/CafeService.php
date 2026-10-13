@@ -19,7 +19,7 @@ class CafeService
             throw new ApiException('Cafe slug already exists', 409);
         }
 
-        return Cafe::create($attributes);
+        return Cafe::create($attributes)->refresh();
     }
 
     /**
